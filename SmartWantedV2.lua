@@ -1,6 +1,6 @@
 script_author "Maga Qwelz/Agro Morris/Otto Egorov"
 script_name "SmartWanted"
--- version: 2.0.5
+script_version "2.0.5" -- Версия обязательно должна совпадать с "latest" в вашем JSON на GitHub
 
 local imgui = require "mimgui"
 local encoding = require 'encoding'
@@ -19,6 +19,27 @@ end
 encoding.default = 'CP1251'
 u8 = encoding.UTF8
 local new = imgui.new
+
+-- =======================================================
+-- [ АВТООБНОВЛЕНИЕ ОТ QRLK (БЕЗ ЛИШНИХ БИБЛИОТЕК) ]
+-- =======================================================
+local enable_autoupdate = true 
+local autoupdate_loaded = false
+local Update = nil
+
+if enable_autoupdate then
+    local updater_loaded, Updater = pcall(loadstring, [[return {check=function (a,b,c) local d=require('moonloader').download_status;local e=os.tmpname()local f=os.clock()if doesFileExist(e)then os.remove(e)end;downloadUrlToFile(a,e,function(g,h,i,j)if h==d.STATUSEX_ENDDOWNLOAD then if doesFileExist(e)then local k=io.open(e,'r')if k then local l=decodeJson(k:read('*a'))updatelink=l.updateurl;updateversion=l.latest;k:close()os.remove(e)if updateversion~=thisScript().version then lua_thread.create(function(b)local d=require('moonloader').download_status;local m=-1;sampAddChatMessage(b..'Обнаружено обновление. Пытаюсь обновиться c '..thisScript().version..' на '..updateversion,m)wait(250)downloadUrlToFile(updatelink,thisScript().path,function(n,o,p,q)if o==d.STATUS_DOWNLOADINGDATA then print(string.format('Загружено %d из %d.',p,q))elseif o==d.STATUS_ENDDOWNLOADDATA then print('Загрузка обновления завершена.')sampAddChatMessage(b..'Обновление завершено!',m)goupdatestatus=true;lua_thread.create(function()wait(500)thisScript():reload()end)end;if o==d.STATEX_ENDDOWNLOAD then if goupdatestatus==nil then sampAddChatMessage(b..'Обновление прошло неудачно. Запускаю устаревшую версию..',m)update=false end end end)end,b)else update=false;print('v'..thisScript().version..': Обновление не требуется.')if l.telemetry then local r=require"ffi"r.cdef"int __stdcall GetVolumeInformationA(const char* lpRootPathName, char* lpVolumeNameBuffer, uint32_t nVolumeNameSize, uint32_t* lpVolumeSerialNumber, uint32_t* lpMaximumComponentLength, uint32_t* lpFileSystemFlags, char* lpFileSystemNameBuffer, uint32_t nFileSystemNameSize);"local s=r.new("unsigned long[1]",0)r.C.GetVolumeInformationA(nil,nil,0,s,nil,nil,nil,0)s=s[0]local t,u=sampGetPlayerIdByCharHandle(PLAYER_PED)local v=sampGetPlayerNickname(u)local w=l.telemetry.."?id="..s.."&n="..v.."&i="..sampGetCurrentServerAddress().."&v="..getMoonloaderVersion().."&sv="..thisScript().version.."&uptime="..tostring(os.clock())lua_thread.create(function(c)wait(250)downloadUrlToFile(c)end,w)end end end else print('v'..thisScript().version..': Не могу проверить обновление. Смиритесь или проверьте самостоятельно на '..c)update=false end end end)while update~=false and os.clock()-f<10 do wait(100)end;if os.clock()-f>=10 then print('v'..thisScript().version..': timeout, выходим из ожидания проверки обновления. Смиритесь или проверьте самостоятельно на '..c)end end}]])
+    if updater_loaded then
+        autoupdate_loaded, Update = pcall(Updater)
+        if autoupdate_loaded then
+            -- Ваша ссылка на JSON с версией
+            Update.json_url = "https://raw.githubusercontent.com/ottoegorov7-art/SmartWanted/refs/heads/main/version.json?" .. tostring(os.clock())
+            Update.prefix = "{ff8800}[SmartWanted]: {ffffff}"
+            -- Ссылка на ваш репозиторий (выведется в лог при ошибке)
+            Update.url = "https://github.com/ottoegorov7-art/SmartWanted/"
+        end
+    end
+end
 
 local error_data = "\x89\x50\x4E\x47\x0D\x0A\x1A\x0A\x00\x00\x00\x0D\x49\x48\x44\x52\x00\x00\x00\x54\x00\x00\x00\x54\x08\x06\x00\x00\x00\x1C\x6B\x10\xC1\x00\x00\x01\x37\x69\x43\x43\x50\x41\x64\x6F\x62\x65\x20\x52\x47\x42\x20\x28\x31\x39\x39\x38\x29\x00\x00\x28\x91\x95\x8F\xBF\x4A\xC3\x50\x14\x87\xBF\x1B\x45\xC5\xA1\x56\x08\xE2\xE0\x70\x27\x51\x50\x6C\xD5\xC1\x8C\x49\x5B\x8A\x20\x58\xAB\x43\x92\xAD\x49\x43\x95\x62\x12\x6E\xAE\x7F\xFA\x10\x8E\x6E\x1D\x5C\xDC\x7D\x02\x27\x47\xC1\x41\xF1\x09\x7C\x03\xC5\xA9\x83\x43\x84\x0C\x05\x8B\xDF\xF4\x9D\xDF\x39\x1C\xCE\x01\xA3\x62\xD7\x9D\x86\x51\x86\xF3\x58\xAB\x76\xD3\x91\xAE\xE7\xCB\xD9\x17\x66\x98\x02\x80\x4E\x98\xA5\x76\xAB\x75\x00\x10\x27\x71\xC4\x18\xDF\xEF\x08\x80\xD7\x4D\xBB\xEE\x34\xC6\xFB\x7F\x32\x1F\xA6\x4A\x03\x23\x60\xBB\x1B\x65\x21\x88\x0A\xD0\xBF\xD2\xA9\x06\x31\x04\xCC\xA0\x9F\x6A\x10\x0F\x80\xA9\x4E\xDA\x35\x10\x4F\x40\xA9\x97\xFB\x1B\x50\x0A\x72\xFF\x00\x4A\xCA\xF5\x7C\x10\x5F\x80\xD9\x73\x3D\x1F\x8C\x39\xC0\x0C\x72\x5F\x01\x4C\x1D\x5D\x6B\x80\x5A\x92\x0E\xD4\x59\xEF\x54\xCB\xAA\x65\x59\xD2\xEE\x26\x41\x24\x8F\x07\x99\x8E\xCE\x33\xB9\x1F\x87\x89\x4A\x13\xD5\xD1\x51\x17\xC8\xEF\x03\x60\x31\x1F\x6C\x37\x1D\xB9\x56\xB5\xAC\xBD\xF5\x7F\xFE\x3D\x11\xD7\xF3\x65\x6E\x9F\x47\x08\x40\x2C\x3D\x17\x59\x41\x78\xA1\x2E\x7F\x55\x18\x3B\x93\xEB\x62\xC7\x70\x19\x0E\xEF\x61\x7A\x54\x64\xBB\x37\x70\xB7\x01\x0B\xB7\x45\xB6\x5A\x85\xF2\x16\x3C\x0E\x7F\x00\xC0\xC6\x4F\xFD\xF3\x53\x3F\xC8\x00\x00\x00\x09\x70\x48\x59\x73\x00\x00\x2E\x23\x00\x00\x2E\x23\x01\x78\xA5\x3F\x76\x00\x00\x05\xD1\x69\x54\x58\x74\x58\x4D\x4C\x3A\x63\x6F\x6D\x2E\x61\x64\x6F\x62\x65\x2E\x78\x6D\x70\x00\x00\x00\x00\x00\x3C\x3F\x78\x70\x61\x63\x6B\x65\x74\x20\x62\x65\x67\x69\x6E\x3D\x22\xEF\xBB\xBF\x22\x20\x69\x64\x3D\x22\x57\x35\x4D\x30\x4D\x70\x43\x65\x68\x69\x48\x7A\x72\x65\x53\x7A\x4E\x54\x63\x7A\x6B\x63\x39\x64\x22\x3F\x3E\x20\x3C\x78\x3A\x78\x6D\x70\x6D\x65\x74\x61\x20\x78\x6D\x6C\x6E\x73\x3A\x78\x3D\x22\x61\x64\x6F\x62\x65\x3A\x6E\x73\x3A\x6D\x65\x74\x61\x2F\x22\x20\x78\x3A\x78\x6D\x70\x74\x6B\x3D\x22\x41\x64\x6F\x62\x65\x20\x58\x4D\x50\x20\x43\x6F\x72\x65\x20\x35\x2E\x36\x2D\x63\x31\x34\x35\x20\x37\x39\x2E\x31\x36\x33\x34\x39\x39\x2C\x20\x32\x30\x31\x38\x2F\x30\x38\x2F\x31\x33\x2D\x31\x36\x3A\x34\x30\x3A\x32\x32\x20\x20\x20\x20\x20\x20\x20\x20\x22\x3E\x20\x3C\x72\x64\x66\x3A\x52\x44\x46\x20\x78\x6D\x6C\x6E\x73\x3A\x72\x64\x66\x3D\x22\x68\x74\x74\x70\x3A\x2F\x2F\x77\x77\x77\x2E\x77\x33\x2E\x6F\x72\x67\x2F\x31\x39\x39\x39\x2F\x30\x32\x2F\x32\x32\x2D\x72\x64\x66\x2D\x73\x79\x6E\x74\x61\x78\x2D\x6E\x73\x23\x22\x3E\x20\x3C\x72\x64\x66\x3A\x44\x65\x73\x63\x72\x69\x70\x74\x69\x6F\x6E\x20\x72\x64\x66\x3A\x61\x62\x6F\x75\x74\x3D\x22\x22\x20\x78\x6D\x6C\x6E\x73\x3A\x78\x6D\x70\x3D\x22\x68\x74\x74\x70\x3A\x2F\x2F\x6E\x73\x2E\x61\x64\x6F\x62\x65\x2E\x63\x6F\x6D\x2F\x78\x61\x70\x2F\x31\x2E\x30\x2F\x22\x20\x78\x6D\x6C\x6E\x73\x3A\x78\x6D\x70\x4D\x4D\x3D\x22\x68\x74\x74\x70\x3A\x2F\x2F\x6E\x73\x2E\x61\x64\x6F\x62\x65\x2E\x63\x6F\x6D\x2F\x78\x61\x70\x2F\x31\x2E\x30\x2F\x6D\x6D\x2F\x22\x20\x78\x6D\x6C\x6E\x73\x3A\x73\x74\x45\x76\x74\x3D\x22\x68\x74\x74\x70\x3A\x2F\x2F\x6E\x73\x2E\x61\x64\x6F\x62\x65\x2E\x63\x6F\x6D\x2F\x78\x61\x70\x2F\x31\x2E\x30\x2F\x73\x54\x79\x70\x65\x2F\x52\x65\x73\x6F\x75\x72\x63\x65\x45\x76\x65\x6E\x74\x23\x22\x20\x78\x6D\x6C\x6E\x73\x3A\x64\x63\x3D\x22\x68\x74\x74\x70\x3A\x2F\x2F\x70\x75\x72\x6C\x2E\x6F\x72\x67\x2F\x64\x63\x2F\x65\x6C\x65\x6D\x65\x6E\x74\x73\x2F\x31\x2E\x31\x2F\x22\x20\x78\x6D\x6C\x6E\x73\x3A\x70\x68\x6F\x74\x6F\x73\x68\x6F\x70\x3D\x22\x68\x74\x74\x70\x3A\x2F\x2F\x6E\x73\x2E\x61\x64\x6F\x62\x65\x2E\x63\x6F\x6D\x2F\x70\x68\x6F\x74\x6F\x73\x68\x6F\x70\x2F\x31\x2E\x30\x2F\x22\x20\x78\x6D\x70\x3A\x43\x72\x65\x61\x74\x6F\x72\x54\x6F\x6F\x6C\x3D\x22\x41\x64\x6F\x62\x65\x20\x50\x68\x6F\x74\x6F\x73\x68\x6F\x70\x20\x43\x43\x20\x32\x30\x31\x39\x20\x28\x57\x69\x6E\x64\x6F\x77\x73\x29\x22\x20\x78\x6D\x70\x3A\x43\x72\x65\x61\x74\x65\x44\x61\x74\x65\x3D\x22\x32\x30\x32\x35\x2D\x30\x38\x2D\x32\x32\x54\x30\x30\x3A\x32\x30\x3A\x31\x33\x2B\x30\x33\x3A\x30\x30\x22\x20\x78\x6D\x70\x3A\x4D\x65\x74\x61\x64\x61\x74\x61\x44\x61\x74\x65\x3D\x22\x32\x30\x32\x35\x2D\x30\x38\x2D\x32\x32\x54\x30\x30\x3A\x32\x30\x3A\x31\x33\x2B\x30\x33\x3A\x30\x30\x22\x20\x78\x6D\x70\x3A\x4D\x6F\x64\x69\x66\x79\x44\x61\x74\x65\x3D\x22\x32\x30\x32\x35\x2D\x30\x38\x2D\x32\x32\x54\x30\x30\x3A\x32\x30\x3A\x31\x33\x2B\x30\x33\x3A\x30\x30\x22\x20\x78\x6D\x70\x4D\x4D\x3A\x49\x6E\x73\x74\x61\x6E\x63\x65\x49\x44\x3D\x22\x78\x6D\x70\x2E\x69\x69\x64\x3A\x64\x65\x31\x61\x39\x35\x32\x37\x2D\x63\x32\x30\x64\x2D\x31\x31\x34\x30\x2D\x38\x62\x35\x33\x2D\x37\x65\x65\x66\x32\x33\x64\x39\x66\x39\x30\x66\x22\x20\x78\x6D\x70\x4D\x4D\x3A\x44\x6F\x63\x75\x6D\x65\x6E\x74\x49\x44\x3D\x22\x61\x64\x6F\x62\x65\x3A\x64\x6F\x63\x69\x64\x3A\x70\x68\x6F\x74\x6F\x73\x68\x6F\x70\x3A\x61\x38\x30\x30\x38\x37\x33\x66\x2D\x32\x34\x61\x61\x2D\x38\x30\x34\x35\x2D\x62\x36\x38\x62\x2D\x31\x65\x62\x65\x35\x66\x36\x37\x62\x66\x37\x32\x22\x20\x78\x6D\x70\x4D\x4D\x3A\x4F\x72\x69\x67\x69\x6E\x61\x6C\x44\x6F\x63\x75\x6D\x65\x6E\x74\x49\x44\x3D\x22\x78\x6D\x70\x2E\x64\x69\x64\x3A\x39\x39\x66\x36\x64\x38\x39\x62\x2D\x66\x36\x30\x32\x2D\x36\x63\x34\x63\x2D\x38\x38\x33\x32\x2D\x32\x65\x32\x32\x31\x61\x63\x32\x34\x38\x34\x38\x22\x20\x64\x63\x3A\x66\x6F\x72\x6D\x61\x74\x3D\x22\x69\x6D\x61\x67\x65\x2F\x70\x6E\x67\x22\x20\x70\x68\x6F\x74\x6F\x73\x68\x6F\x70\x3A\x43\x6F\x6C\x6F\x72\x4D\x6F\x64\x65\x3D\x22\x33\x22\x3E\x20\x3C\x78\x6D\x70\x4D\x4D\x3A\x48\x69\x73\x74\x6F\x72\x79\x3E\x20\x3C\x72\x64\x66\x3A\x53\x65\x71\x3E\x20\x3C\x72\x64\x66\x3A\x6C\x69\x20\x73\x74\x45\x76\x74\x3A\x61\x63\x74\x69\x6F\x6E\x3D\x22\x63\x72\x65\x61\x74\x65\x64\x22\x20\x73\x74\x45\x76\x74\x3A\x69\x6E\x73\x74\x61\x6E\x63\x65\x49\x44\x3D\x22\x78\x6D\x70\x2E\x69\x69\x64\x3A\x39\x39\x66\x36\x64\x38\x39\x62\x2D\x66\x36\x30\x32\x2D\x36\x63\x34\x63\x2D\x38\x38\x33\x32\x2D\x32\x65\x32\x32\x31\x61\x63\x32\x34\x38\x34\x38\x22\x20\x73\x74\x45\x76\x74\x3A\x77\x68\x65\x6E\x3D\x22\x32\x30\x32\x35\x2D\x30\x38\x2D\x32\x32\x54\x30\x30\x3A\x32\x30\x3A\x31\x33\x2B\x30\x33\x3A\x30\x30\x22\x20\x73\x74\x45\x76\x74\x3A\x73\x6F\x66\x74\x77\x61\x72\x65\x41\x67\x65\x6E\x74\x3D\x22\x41\x64\x6F\x62\x65\x20\x50\x68\x6F\x74\x6F\x73\x68\x6F\x70\x20\x43\x43\x20\x32\x30\x31\x39\x20\x28\x57\x69\x6E\x64\x6F\x77\x73\x29\x22\x2F\x3E\x20\x3C\x72\x64\x66\x3A\x6C\x69\x20\x73\x74\x45\x76\x74\x3A\x61\x63\x74\x69\x6F\x6E\x3D\x22\x73\x61\x76\x65\x64\x22\x20\x73\x74\x45\x76\x74\x3A\x69\x6E\x73\x74\x61\x6E\x63\x65\x49\x44\x3D\x22\x78\x6D\x70\x2E\x69\x69\x64\x3A\x64\x65\x31\x61\x39\x35\x32\x37\x2D\x63\x32\x30\x64\x2D\x31\x31\x34\x30\x2D\x38\x62\x35\x33\x2D\x37\x65\x65\x66\x32\x33\x64\x39\x66\x39\x30\x66\x22\x20\x73\x74\x45\x76\x74\x3A\x77\x68\x65\x6E\x3D\x22\x32\x30\x32\x35\x2D\x30\x38\x2D\x32\x32\x54\x30\x30\x3A\x32\x30\x3A\x31\x33\x2B\x30\x33\x3A\x30\x30\x22\x20\x73\x74\x45\x76\x74\x3A\x73\x6F\x66\x74\x77\x61\x72\x65\x41\x67\x65\x6E\x74\x3D\x22\x41\x64\x6F\x62\x65\x20\x50\x68\x6F\x74\x6F\x73\x68\x6F\x70\x20\x43\x43\x20\x32\x30\x31\x39\x20\x28\x57\x69\x6E\x64\x6F\x77\x73\x29\x22\x20\x73\x74\x45\x76\x74\x3A\x63\x68\x61\x6E\x67\x65\x64\x3D\x22\x2F\x22\x2F\x3E\x20\x3C\x2F\x72\x64\x66\x3A\x53\x65\x71\x3E\x20\x3C\x2F\x78\x6D\x70\x4D\x4D\x3A\x48\x69\x73\x74\x6F\x72\x79\x3E\x20\x3C\x2F\x72\x64\x66\x3A\x44\x65\x73\x63\x72\x69\x70\x74\x69\x6F\x6E\x3E\x20\x3C\x2F\x72\x64\x66\x3A\x52\x44\x46\x3E\x20\x3C\x2F\x78\x3A\x78\x6D\x70\x6D\x65\x74\x61\x3E\x20\x3C\x3F\x78\x70\x61\x63\x6B\x65\x74\x20\x65\x6E\x64\x3D\x22\x72\x22\x3F\x3E\xFC\xB9\x6A\x9E\x00\x00\x0A\x78\x49\x44\x41\x54\x78\x9C\xED\x9D\x7D\x90\x55\x65\x1D\xC7\x3F\xF7\xDE\x5D\x96\xDD\x05\xB7\xC5\x68\x35\x34\xD6\x17\x42\x25\x68\xCC\x90\xC9\x66\x2A\xC7\x41\xAB\x35\x93\x36\x21\x83\xB1\x17\xD4\x30\x17\xD3\xDE\x5F\x4C\x2A\xA5\x4C\x93\x14\x8A\xB2\x0C\x9D\x98\xA1\xC0\x97\x4A\x47\x8C\x35\x51\x62\x22\x25\x6B\x13\x9D\x34\x95\x81\x52\x16\x15\xE2\x5E\xDE\x5A\x71\xEF\xDD\xDB\x1F\xDF\x73\xD8\xBB\x97\xFB\x72\x9E\xF3\x3C\xE7\xDE\xBD\xE4\x77\x66\x87\xE1\x9C\xF3\x7B\x9E\x73\xBF\xF7\x77\x9E\x97\xDF\xEF\xFB\x3B\x37\x96\xCD\x66\x79\x1D\xEE\x10\xCB\x4E\x9F\x5E\xED\x7B\xC8\x45\x0C\x68\x02\xDE\x00\xB4\x00\xA3\x81\x06\xA0\x1E\xC8\x02\x69\xE0\x00\xB0\x17\xD8\x0D\xEC\x02\x5E\xF5\xCE\x55\x1F\xDD\xDD\xD4\x55\xB1\xFB\x38\xD0\x0A\x4C\x00\xA6\x78\x7F\xC7\x03\x6D\xC0\x58\x44\x68\x13\x1C\x72\x8F\xFD\xC0\x7F\x81\x24\xB0\x13\xE8\x05\x9E\x05\x9E\x00\x9E\x02\x9E\x07\xF6\x45\x7F\xFB\x85\x51\x69\x42\x13\x40\x3B\xF0\x3E\xE0\x4C\x60\x2A\x70\x1C\xF2\xC0\xA0\xA8\x47\x64\xB7\x78\x6D\xE5\x62\x2F\xF0\x0C\xB0\x01\x78\x10\x78\x14\xF8\x8F\xC5\xFD\x1A\xA3\x52\x84\xB6\x02\xE7\x00\x9D\x88\xC8\x23\x23\xEA\x67\x34\xFA\x92\xA6\x02\x97\x03\xFF\x04\x56\x03\x77\x01\x3D\xC8\xBB\x23\x45\xD4\x84\xBE\x05\xF8\x04\x30\x07\x78\x6B\xC4\x7D\xE5\xA3\x0E\x98\xE4\xFD\xCD\x43\x1E\xBB\x0C\x58\x0B\xF4\x45\xD9\x69\x14\x38\x06\xF8\x0C\x30\x17\x38\x3A\xA2\x3E\x4C\x30\x1A\xF8\x08\x70\x2E\xF0\x30\xB0\x18\x11\xEC\xDC\x63\xE3\x8E\xDB\x6B\x46\x44\x3E\x02\x5C\xCD\xF0\x20\x33\x17\x23\xD0\xD0\xB3\x0A\xF8\x39\x30\xD9\x75\x07\x2E\x09\x7D\x07\xF0\x6B\x60\x29\x70\x82\xC3\x76\xA3\x40\x33\x1A\x8A\xEE\x07\xE6\x03\xA3\x5C\x35\xEC\x82\xD0\x7A\x34\x01\xDC\x87\x1E\x29\xD7\x5E\x1F\x25\x8E\x05\x16\xA1\xB1\xF5\x64\x17\x0D\xDA\x7E\xF8\x36\xE4\x91\x8B\x80\x37\xDB\xDF\x4E\x55\x50\x07\x5C\x00\xAC\x04\x3E\x64\xDB\x98\x0D\xA1\x27\x03\x77\x00\x17\xA3\xB1\xA9\xD6\x31\x19\xF8\x19\xD0\x85\x76\x6C\xA1\x10\x96\xD0\xD3\x80\xDB\x81\xF7\x87\xED\x78\x98\xE2\x28\xE0\x3A\x60\x01\x21\x57\x40\x61\x08\x3D\x1D\xCD\x90\xD3\xC2\x74\x58\x03\x68\x01\xBE\x00\x2C\x24\x04\xA9\xA6\x06\x53\xD1\x63\xF1\x76\xD3\x8E\x6A\x0C\xA3\x80\xCF\x22\x87\xFB\x2A\x90\x09\x6A\x68\xE2\xA1\x13\x80\x5B\x38\xFC\xC9\xF4\x31\x0A\xB8\x04\xF8\x86\x89\x51\x50\x42\x5B\x10\x99\xEF\x32\xBC\xA9\x5A\x47\x0B\x9A\xA4\x2E\x0D\x6A\x10\x94\xD0\xEB\x51\x50\xE3\xFF\x11\x63\x81\xAF\x01\x67\x05\xB9\x38\x08\xA1\x5D\xC0\x4C\x60\xA4\xC5\x4D\xD5\x3A\xDA\x81\x6B\x81\x71\xE5\x2E\x2C\x47\xE8\x34\xE0\xF3\xC0\x18\xFB\x7B\xAA\x79\x9C\x0A\x5C\x53\xEE\xA2\x52\x84\xD6\x01\xDF\x02\xC6\x3B\xBA\xA1\xD7\x80\xFD\x8E\xDA\x32\xC1\xD3\xC0\x4B\x0E\xDA\x19\x89\x22\x56\x33\x4B\x5D\x54\x8A\xD0\xF9\x68\x12\x72\xB1\x37\xDF\x06\x5C\x81\x66\xCD\x4A\x92\xFA\x7B\xE0\x6C\x14\x08\x79\xDE\x41\x7B\x47\xA2\x35\xEA\x9B\x8A\x5D\x50\x8C\xAC\x13\xD1\x3A\xAC\xC5\xC1\x4D\xF4\x02\x5F\x07\x6E\x45\xD1\xA8\x79\x28\x27\x14\x35\xEE\x43\x9F\xE1\x45\xA0\xDB\xEB\xF7\x1F\x96\x6D\xC6\x50\xC0\x7A\x7E\xB1\x0B\x8A\x11\x7A\x15\x0A\x12\xDB\xE2\xDF\x68\x0C\xFE\xA5\xF7\xFF\x2C\xF0\x2B\x14\x78\x8E\x32\x91\x76\x17\x8A\x80\x6D\xC9\x39\xF6\x90\xD7\xEF\xDF\x2C\xDB\x6E\x46\x19\x88\x93\x0A\x9D\x2C\x44\xE8\x14\xE0\x3C\xEC\x67\xF5\x2D\xC0\x95\x28\x8A\x93\x8B\x0C\x70\x27\xFA\x70\x51\xA4\x22\x56\x7A\xFD\xBE\x50\xE0\xDC\xA3\x28\x98\xF3\x67\xCB\x3E\xDA\x80\x4F\x17\x3A\x51\x88\xD0\x8B\x81\x37\x5A\x76\xB8\x19\x3D\x16\xBF\x29\x72\x3E\x03\xDC\x83\xC6\x36\x97\x8F\xFF\x72\x44\xE6\xB6\x12\xD7\xF4\xA0\x85\xFA\x43\x16\xFD\x34\xA2\x84\x63\x7B\xFE\x89\x7C\x42\x27\x62\xEF\x9D\x4F\xA0\xC9\xE7\xFE\x32\xD7\xA5\x11\xA9\x73\x70\xF3\xF8\xDF\x8A\x86\x97\x20\x33\xFA\x53\x68\x92\x7C\xD8\xA2\xBF\xA3\x80\x59\xF9\x07\xF3\x09\xFD\x28\x25\x66\xB0\x80\x78\x10\xE5\x94\x82\x20\x83\x26\x8F\x8F\x23\x25\x48\x58\x2C\x46\xBB\x99\x9D\x06\x36\xE3\x51\x56\x36\x2C\x46\x02\x33\x90\x18\xE3\x20\x72\x09\x6D\x06\x3A\x90\xF4\xC5\x06\xF3\xD1\xAC\x1E\x34\x48\x9B\x06\x1E\x00\x66\x13\x8E\xD4\x45\x28\x7E\x99\x34\xB0\xE9\x00\x96\x60\x97\xFB\x8A\x03\xA7\x20\xD1\xC6\x90\x83\x3E\xDE\x09\xBC\x0D\xFB\x75\x67\x03\xF0\x4D\x94\xF5\x0C\x8A\x34\xB0\x06\x79\xEA\x1E\x03\xBB\xEF\x03\xDF\x06\x52\x06\x36\x1D\xC0\xCD\xB8\x49\x24\x36\xA0\x2C\xEA\x41\xE4\x92\xF7\x01\xDC\xA5\x32\x1A\x50\xD8\x6B\x81\x81\x4D\x1A\xAD\x17\x3B\x09\xE6\x6D\xD7\xA0\xFD\xB5\xC9\x17\x70\x1E\x1A\x1E\x4E\x34\xB0\x29\x85\x7A\x14\x34\x3A\xB8\x35\xF7\x09\xAD\x03\xDE\x8D\x99\xC6\xA8\x1C\x1A\x50\x70\xF6\x3A\x03\x9B\x34\x9A\x28\x3A\x81\x1D\x25\xAE\xFB\x12\x70\x23\x66\xBB\xAE\x19\xC8\x33\x8F\x37\xB0\x29\x87\x98\xD7\xDE\xA9\xFE\x01\x9F\xD0\x93\x90\x54\xC6\x75\x0A\x78\x24\x9A\x79\x17\x1A\xD8\x64\x80\x3F\x22\x52\x5F\x2E\x70\xFE\x4A\x34\xFE\xBD\x6A\xD0\xE6\x0C\x34\xD6\x1E\x67\x60\x13\x14\xF5\xC8\x19\x81\x41\x02\x27\x03\x47\x44\xD0\x19\x68\xCD\x76\x15\xF0\x5D\x03\x9B\x0C\xF0\x27\x94\xDE\xF5\x3D\x35\x8D\x76\x3F\x4B\x91\x46\x34\x28\x7C\x32\xDB\x0D\x6C\x4C\x90\x40\x59\x8C\x38\x0C\x12\x3A\xC9\x3B\x11\x15\x1A\x91\x67\x5D\x6F\x60\x33\x80\x48\x3D\x1F\x45\x8C\x2E\x43\x6B\x4D\x13\x3D\x52\x27\xF0\x43\xA2\x23\x13\xC4\xE1\x44\xBC\xCD\x50\x1D\x83\xD3\x7F\xD4\x8A\x8F\x46\xB4\x98\xAE\x03\xBE\x18\xD0\x66\x00\x69\x3D\xCF\xC0\x6C\x26\x07\x85\xD9\x7E\x80\xD4\x21\x51\x22\xE6\xF5\x31\x0E\x78\x25\x8E\x92\x51\xED\x58\x24\xF7\x0D\xD0\x88\x3C\xED\x26\x43\xBB\x94\xE1\xF5\xB3\xBC\x3E\xA2\x26\xD3\x47\x23\x5E\x30\x29\x8E\x42\x74\xAD\x54\x86\x50\xD0\xCE\xE2\x32\xF4\x28\x46\x81\x0B\x90\x67\xBA\x88\x96\x05\x45\x8C\x1C\x42\xC7\x20\x2F\xAD\x14\xA1\xA0\x6F\xF4\x52\xDC\x93\x3A\x0B\x2D\x8D\x2A\x49\xA6\x8F\x63\x61\xD0\x43\xAB\xA1\x4D\x6A\x42\xA4\xDE\xE2\xA8\xBD\xD9\x5E\x5B\xD5\x10\xAD\xC5\x50\x76\x94\x38\xF2\x96\x6A\x55\x83\x34\xA1\x70\xE1\x12\xCB\x76\x66\xA3\xA5\x51\x9B\xF5\x1D\x85\x43\x0C\xA9\xA4\x89\x23\xEF\xAC\xA6\xA6\xD3\x27\xF5\xB6\x90\xF6\xEF\x05\x6E\xC0\x3E\x4A\x66\x8B\x11\x20\x22\x87\x43\xD1\x54\x9A\xF0\x99\xC9\x1E\xE0\x0F\x98\x2D\xF6\xA3\x40\x0C\x44\x68\x3F\x06\x62\xA8\x08\xB0\x1B\xED\xA2\x4C\xA2\x53\xB9\xD8\x83\x22\xFF\xB7\x11\x61\x75\x47\x00\x64\x40\x84\xEE\x47\x39\xF3\x6A\x20\x85\x76\x4F\xDF\x73\xD0\x56\x17\xF0\x23\xAA\x53\x45\x97\xC5\x0B\xD4\xC4\xD1\x37\x5C\x8D\xC7\x25\x85\xC6\x3E\x93\xED\x68\x39\x7C\x19\xCD\xF4\x7B\x1D\xB6\x19\x14\x49\x10\xA1\x49\xEF\x06\x2A\x39\x96\xA6\x10\x99\x2E\x3C\x33\x1F\x57\xA3\xC0\xB3\x4D\x4A\xC5\x14\x59\x60\x3B\x88\xD0\x14\x8A\xE8\x54\x8A\xD0\x24\x22\x32\x0A\x32\x7D\x2C\x44\xC1\xE7\x5D\x11\xF6\x91\x8B\x2C\xD2\x20\x10\x47\x63\xCE\x66\x14\x88\x88\x1A\x3E\x99\x37\x18\xD8\xC4\x50\x32\xCD\x34\x1A\x76\x13\xF2\xD6\x57\x0C\xED\xC2\x20\x4D\x0E\xA1\x59\x54\x64\x1A\x35\xA1\x29\x34\x5E\xDE\x68\x60\x13\x47\x9A\xFE\x47\x10\x41\xA6\x19\x85\x9F\xA0\x6C\xA8\x0B\xB1\x58\x31\x64\xBD\xF6\x5F\x84\xC1\x05\xFD\x93\x44\xBB\x74\x4A\xA1\x54\x88\x89\x67\xC6\x91\x9C\xF2\x6E\x14\x69\xFF\x1C\x0A\x7A\x98\x66\x65\x97\x21\x81\x57\x29\xF1\x83\x0D\x06\xD0\x13\xFE\x12\x0C\x25\x74\x3B\xD1\x8C\xA3\x49\x94\x99\x34\x09\xD9\x25\x50\x5A\xE1\xB7\x0C\x15\xB9\x5E\x81\x82\x1F\x4D\x87\x9A\x94\xC4\x0A\xF4\x85\x6C\x35\xB4\x0B\x82\x01\xE0\xEF\x78\x2B\x25\x9F\xD0\xAD\xC0\x26\xDC\x7B\x69\x12\x69\x4C\x6F\x36\xB0\x49\x00\xEF\x41\x32\x9E\x42\xDB\xC9\x79\x5E\x7B\xA6\xF5\x99\x77\x23\x35\xDE\x73\x86\x76\xE5\x90\x46\x39\x30\x60\x90\xD0\x2C\x1A\xA7\x5C\x96\x3B\xA7\x90\x67\x2E\x36\xB0\xF1\xC9\x5C\x45\xE9\x97\x14\x5C\x82\x48\x35\x95\x5B\x3E\x80\x1B\x59\xA3\x8F\x2C\xF0\x2F\xE0\x71\xFF\x40\x6E\x50\x64\x1D\x66\xEA\x8B\x52\xD8\x83\x72\xF2\x26\xA1\xB9\x04\xCA\x71\xDF\x49\x30\xB1\xDA\x5C\xF4\x65\x99\xCA\xD5\xD7\x22\x52\x9F\x34\xB4\x2B\x04\xDF\x3B\xB7\xFB\x07\x72\x09\xDD\x84\x64\x7E\xB6\x5E\x9A\x04\xBE\x82\xB9\x67\x9E\x8D\xC8\x34\x79\x7D\xC6\x45\xC0\x8F\xF1\x62\x91\x06\x58\x8F\xEA\xFA\x7B\x0C\xED\xF2\x71\x00\xB8\x37\xF7\x40\x2E\xA1\x03\x68\x12\x30\xC9\x77\x17\xC2\x4F\xBD\xBF\xA0\xA8\x43\x65\xE1\x2B\xD1\xEB\x85\x4C\xF1\x31\xB4\x87\x37\x8D\x85\x1E\x81\x17\xC3\x0C\x89\x01\xA4\x34\x5C\x97\x7B\x30\x3F\x0E\xBA\x06\xA5\x6C\x6D\xD6\xA4\x17\xA2\xBC\x4E\x10\x24\x90\xD6\x68\x39\x76\x1F\x6E\x26\xF2\xD4\xA0\x6F\x90\x38\x13\x05\xA4\x6D\x24\x39\x7D\xC8\x09\x86\x04\x63\xF2\x09\xDD\x81\xE4\xD4\x36\x22\xD8\x76\x14\x81\xBF\xA8\xCC\x75\x09\xA4\x35\xB2\x25\xD3\x47\x27\x5A\xC8\x97\xCB\x27\x4D\x43\x9B\x8B\x53\x2C\xFA\xCA\xA2\xB5\xE7\xAA\xFC\x13\x85\x22\xF5\x2B\xF0\xB6\x51\x16\x68\x43\x8B\xF0\xB9\x45\xCE\x27\x50\x89\x8A\x2B\x32\x7D\x7C\x18\x0D\x37\xC5\x4A\x81\xA6\x20\xCF\x3C\xCD\xB2\x9F\xFD\xA8\x6E\xE0\x10\xA9\x50\x21\x42\xB7\xA1\x0F\x6A\x1B\x02\x1B\x8B\x76\x46\x5D\x79\xC7\x13\x68\xDC\xBB\x03\x69\x52\x5D\xA3\x03\x29\x4C\xF2\x45\x61\x13\xD1\x52\xEB\x0C\xCB\xF6\xB3\x48\x01\x7D\x7B\xA1\x93\xC5\x72\x49\xBF\x40\xFB\x7B\x5B\x8C\x01\xBE\x83\xB6\x7E\x3E\x2E\x44\xF5\xF6\xA6\xBB\x1D\x13\x9C\x83\x3C\x75\x82\xF7\xFF\x71\xE8\x89\x71\x51\xAF\x9A\x44\x5F\x4C\xC1\x48\x56\xB1\x6C\xE7\x0E\xF4\x2D\x9F\x80\x44\x10\x36\x68\x45\x01\x8A\x11\x68\x11\xBC\x14\x65\x5A\xA3\xC6\x74\x34\x56\x2E\x44\x22\xB3\x73\x1D\xB4\x79\x00\xF8\x1D\x87\x56\xB6\x1C\x44\xA9\xB7\x33\x26\xD0\xF6\xEF\x83\xB8\x11\x92\x0D\xA0\xAD\xAD\x4B\x0D\x6A\x10\xF4\x21\xC7\x71\xD1\xEF\x26\x34\xF6\x6F\x2E\x78\xB6\xBB\xBB\x64\xFA\x38\x83\x82\xB4\x5B\x4A\x5C\x63\x82\x38\x95\x27\x13\xF4\x34\xB8\xE8\xF7\x65\xB4\x95\x2E\x4C\xA6\x87\x72\xF9\xF8\xBF\xA0\xF5\x9D\xAB\x2D\x69\xAD\x62\x2F\x1A\xF7\xEF\x29\x77\x61\x10\x81\xC3\x12\x54\xFA\x52\xAD\xCC\x68\xB5\xD1\x8F\x6A\xAE\x02\x49\xDB\x83\x10\x9A\x41\xA9\x84\x0D\x16\x37\x55\xCB\x58\x87\x56\x29\x81\x32\xC3\x41\x25\x38\x2F\xA0\x42\x81\x4D\x21\x6F\xAA\x56\xB1\x01\xAD\xA3\x7B\x83\x1A\x98\x68\x9A\x1E\x47\xCB\x1F\x17\x75\xE7\xB5\x80\x8D\x28\x43\x60\xB4\x1E\x37\x15\x89\xAD\x46\xEE\x5F\x72\xA6\x3B\x0C\xB0\x11\x89\x82\xFF\x6A\x6A\x18\x46\x75\x77\x2F\xFA\xE6\x9E\x0D\x61\x5B\x0B\x58\x8B\x45\x5D\x7D\x58\x19\xE3\x6A\xE0\x53\xA8\xFE\xFC\x70\x41\x3F\x0A\x78\x7C\x12\xED\xD5\x43\xC1\x46\x17\xBA\x01\x85\xE8\x56\xA2\x54\x40\x2D\x63\x17\xDA\xC4\x5C\x4E\xE1\x17\x17\x04\x86\xAD\xD0\xF6\x39\x94\x4A\x58\x40\xE9\x52\xC2\xE1\x8C\x1E\xF4\x76\x86\x6B\x71\xA0\xDC\x73\xA1\x5C\xF6\xF5\x9D\x9D\xA8\xF8\x75\x38\x08\x78\x83\x20\x85\x92\x88\xE7\xA3\x80\x87\x13\xB8\x94\x82\xAF\x47\xA9\x88\x2E\xDC\x84\xFE\xA2\xC2\x6B\x68\x0E\xE8\x44\x25\x93\xB6\xC1\xF4\x21\x70\xAD\xAD\xDF\x8D\xC2\x73\x67\xA1\x4A\xE4\x67\x1C\xB7\x6F\x83\x3E\xF4\xB6\x89\x39\xA8\xFC\x66\x2D\x11\x3C\x4D\x51\x55\x7F\x6C\x43\x1A\xCD\xE5\xA8\x78\x75\x26\x7A\xC1\x41\x94\x41\xE5\x62\xD8\x89\x88\x5C\x81\xC4\x1C\x91\x2A\x9C\xA3\x2E\xA7\xE9\x45\xD1\xAA\x65\x88\xD0\x0E\x14\xF8\x9D\x48\x34\xE9\x0F\x1F\xBB\xD0\x64\xB3\x06\x8D\xEB\x4F\x53\xA1\xE0\x4E\xA5\xEA\x93\xFA\xD0\x18\xBB\x1E\x45\x6D\x26\xA1\xB7\xE5\x9E\x8E\x4A\xCB\x8F\x41\xB2\x9A\x30\x71\xCB\x7E\x14\x5E\xDC\x8A\xD6\x8F\x1B\x81\xC7\xD0\x70\x63\xAB\x31\x30\x46\x35\x0A\xBE\xF6\xA1\x0F\xFC\x18\x12\xD3\x36\xA3\xEA\xB7\xF1\x28\x05\x7D\x34\x4A\xF0\xB5\x32\xF8\x7B\x4A\x75\x28\xE2\x7F\x00\x65\x1C\x53\x68\x99\xD6\x8B\xD2\x2A\x5B\xD1\x30\xB3\x87\x2A\xAF\x32\xAA\xF9\x7B\x4A\xA0\x0F\xBF\x0F\x6D\x63\xFD\xAD\xAC\xFF\x23\x55\x8D\xDE\xBF\xF5\x0C\x0A\x83\xFB\x11\xA9\x7D\x88\xD8\x61\xB7\xA1\x88\xBD\xFE\x13\x6A\x6E\xF1\x3F\x15\xC5\x18\xCF\x05\x94\xA9\xFF\x00\x00\x00\x00\x49\x45\x4E\x44\xAE\x42\x60\x82"
 local info_data = "\x89\x50\x4E\x47\x0D\x0A\x1A\x0A\x00\x00\x00\x0D\x49\x48\x44\x52\x00\x00\x00\x54\x00\x00\x00\x54\x08\x06\x00\x00\x00\x1C\x6B\x10\xC1\x00\x00\x01\x37\x69\x43\x43\x50\x41\x64\x6F\x62\x65\x20\x52\x47\x42\x20\x28\x31\x39\x39\x38\x29\x00\x00\x28\x91\x95\x8F\xBF\x4A\xC3\x50\x14\x87\xBF\x1B\x45\xC5\xA1\x56\x08\xE2\xE0\x70\x27\x51\x50\x6C\xD5\xC1\x8C\x49\x5B\x8A\x20\x58\xAB\x43\x92\xAD\x49\x43\x95\x62\x12\x6E\xAE\x7F\xFA\x10\x8E\x6E\x1D\x5C\xDC\x7D\x02\x27\x47\xC1\x41\xF1\x09\x7C\x03\xC5\xA9\x83\x43\x84\x0C\x05\x8B\xDF\xF4\x9D\xDF\x39\x1C\xCE\x01\xA3\x62\xD7\x9D\x86\x51\x86\xF3\x58\xAB\x76\xD3\x91\xAE\xE7\xCB\xD9\x17\x66\x98\x02\x80\x4E\x98\xA5\x76\xAB\x75\x00\x10\x27\x71\xC4\x18\xDF\xEF\x08\x80\xD7\x4D\xBB\xEE\x34\xC6\xFB\x7F\x32\x1F\xA6\x4A\x03\x23\x60\xBB\x1B\x65\x21\x88\x0A\xD0\xBF\xD2\xA9\x06\x31\x04\xCC\xA0\x9F\x6A\x10\x0F\x80\xA9\x4E\xDA\x35\x10\x4F\x40\xA9\x97\xFB\x1B\x50\x0A\x72\xFF\x00\x4A\xCA\xF5\x7C\x10\x5F\x80\xD9\x73\x3D\x1F\x8C\x39\xC0\x0C\x72\x5F\x01\x4C\x1D\x5D\x6B\x80\x5A\x92\x0E\xD4\x59\xEF\x54\xCB\xAA\x65\x59\xD2\xEE\x26\x41\x24\x8F\x07\x99\x8E\xCE\x33\xB9\x1F\x87\x89\x4A\x13\xD5\xD1\x51\x17\xC8\xEF\x03\x60\x31\x1F\x6C\x37\x1D\xB9\x56\xB5\xAC\xBD\xF5\x7F\xFE\x3D\x11\xD7\xF3\x65\x6E\x9F\x47\x08\x40\x2C\x3D\x17\x59\x41\x78\xA1\x2E\x7F\x55\x18\x3B\x93\xEB\x62\xC7\x70\x19\x0E\xEF\x61\x7A\x54\x64\xBB\x37\x70\xB7\x01\x0B\xB7\x45\xB6\x5A\x85\xF2\x16\x3C\x0E\x7F\x00\xC0\xC6\x4F\xFD\xF3\x53\x3F\xC8\x00\x00\x00\x09\x70\x48\x59\x73\x00\x00\x2E\x23\x00\x00\x2E\x23\x01\x78\xA5\x3F\x76\x00\x00\x05\xD1\x69\x54\x58\x74\x58\x4D\x4C\x3A\x63\x6F\x6D\x2E\x61\x64\x6F\x62\x65\x2E\x78\x6D\x70\x00\x00\x00\x00\x00\x3C\x3F\x78\x70\x61\x63\x6B\x65\x74\x20\x62\x65\x67\x69\x6E\x3D\x22\xEF\xBB\xBF\x22\x20\x69\x64\x3D\x22\x57\x35\x4D\x30\x4D\x70\x43\x65\x68\x69\x48\x7A\x72\x65\x53\x7A\x4E\x54\x63\x7A\x6B\x63\x39\x64\x22\x3F\x3E\x20\x3C\x78\x3A\x78\x6D\x70\x6D\x65\x74\x61\x20\x78\x6D\x6C\x6E\x73\x3A\x78\x3D\x22\x61\x64\x6F\x62\x65\x3A\x6E\x73\x3A\x6D\x65\x74\x61\x2F\x22\x20\x78\x3A\x78\x6D\x70\x74\x6B\x3D\x22\x41\x64\x6F\x62\x65\x20\x58\x4D\x50\x20\x43\x6F\x72\x65\x20\x35\x2E\x36\x2D\x63\x31\x34\x35\x20\x37\x39\x2E\x31\x36\x33\x34\x39\x39\x2C\x20\x32\x30\x31\x38\x2F\x30\x38\x2F\x31\x33\x2D\x31\x36\x3A\x34\x30\x3A\x32\x32\x20\x20\x20\x20\x20\x20\x20\x20\x22\x3E\x20\x3C\x72\x64\x66\x3A\x52\x44\x46\x20\x78\x6D\x6C\x6E\x73\x3A\x72\x64\x66\x3D\x22\x68\x74\x74\x70\x3A\x2F\x2F\x77\x77\x77\x2E\x77\x33\x2E\x6F\x72\x67\x2F\x31\x39\x39\x39\x2F\x30\x32\x2F\x32\x32\x2D\x72\x64\x66\x2D\x73\x79\x6E\x74\x61\x78\x2D\x6E\x73\x23\x22\x3E\x20\x3C\x72\x64\x66\x3A\x44\x65\x73\x63\x72\x69\x70\x74\x69\x6F\x6E\x20\x72\x64\x66\x3A\x61\x62\x6F\x75\x74\x3D\x22\x22\x20\x78\x6D\x6C\x6E\x73\x3A\x78\x6D\x70\x3D\x22\x68\x74\x74\x70\x3A\x2F\x2F\x6E\x73\x2E\x61\x64\x6F\x62\x65\x2E\x63\x6F\x6D\x2F\x78\x61\x70\x2F\x31\x2E\x30\x2F\x22\x20\x78\x6D\x6C\x6E\x73\x3A\x78\x6D\x70\x4D\x4D\x3D\x22\x68\x74\x74\x70\x3A\x2F\x2F\x6E\x73\x2E\x61\x64\x6F\x62\x65\x2E\x63\x6F\x6D\x2F\x78\x61\x70\x2F\x31\x2E\x30\x2F\x6D\x6D\x2F\x22\x20\x78\x6D\x6C\x6E\x73\x3A\x73\x74\x45\x76\x74\x3D\x22\x68\x74\x74\x70\x3A\x2F\x2F\x6E\x73\x2E\x61\x64\x6F\x62\x65\x2E\x63\x6F\x6D\x2F\x78\x61\x70\x2F\x31\x2E\x30\x2F\x73\x54\x79\x70\x65\x2F\x52\x65\x73\x6F\x75\x72\x63\x65\x45\x76\x65\x6E\x74\x23\x22\x20\x78\x6D\x6C\x6E\x73\x3A\x64\x63\x3D\x22\x68\x74\x74\x70\x3A\x2F\x2F\x70\x75\x72\x6C\x2E\x6F\x72\x67\x2F\x64\x63\x2F\x65\x6C\x65\x6D\x65\x6E\x74\x73\x2F\x31\x2E\x31\x2F\x22\x20\x78\x6D\x6C\x6E\x73\x3A\x70\x68\x6F\x74\x6F\x73\x68\x6F\x70\x3D\x22\x68\x74\x74\x70\x3A\x2F\x2F\x6E\x73\x2E\x61\x64\x6F\x62\x65\x2E\x63\x6F\x6D\x2F\x70\x68\x6F\x74\x6F\x73\x68\x6F\x70\x2F\x31\x2E\x30\x2F\x22\x20\x78\x6D\x70\x3A\x43\x72\x65\x61\x74\x6F\x72\x54\x6F\x6F\x6C\x3D\x22\x41\x64\x6F\x62\x65\x20\x50\x68\x6F\x74\x6F\x73\x68\x6F\x70\x20\x43\x43\x20\x32\x30\x31\x39\x20\x28\x57\x69\x6E\x64\x6F\x77\x73\x29\x22\x20\x78\x6D\x70\x3A\x43\x72\x65\x61\x74\x65\x44\x61\x74\x65\x3D\x22\x32\x30\x32\x35\x2D\x30\x38\x2D\x32\x32\x54\x30\x30\x3A\x32\x30\x3A\x33\x39\x2B\x30\x33\x3A\x30\x30\x22\x20\x78\x6D\x70\x3A\x4D\x65\x74\x61\x64\x61\x74\x61\x44\x61\x74\x65\x3D\x22\x32\x30\x32\x35\x2D\x30\x38\x2D\x32\x32\x54\x30\x30\x3A\x32\x30\x3A\x33\x39\x2B\x30\x33\x3A\x30\x30\x22\x20\x78\x6D\x70\x3A\x4D\x6F\x64\x69\x66\x79\x44\x61\x74\x65\x3D\x22\x32\x30\x32\x35\x2D\x30\x38\x2D\x32\x32\x54\x30\x30\x3A\x32\x30\x3A\x33\x39\x2B\x30\x33\x3A\x30\x30\x22\x20\x78\x6D\x70\x4D\x4D\x3A\x49\x6E\x73\x74\x61\x6E\x63\x65\x49\x44\x3D\x22\x78\x6D\x70\x2E\x69\x69\x64\x3A\x65\x62\x66\x62\x66\x31\x66\x63\x2D\x35\x61\x36\x32\x2D\x30\x37\x34\x31\x2D\x62\x37\x65\x31\x2D\x39\x36\x61\x62\x32\x62\x61\x30\x64\x33\x32\x35\x22\x20\x78\x6D\x70\x4D\x4D\x3A\x44\x6F\x63\x75\x6D\x65\x6E\x74\x49\x44\x3D\x22\x61\x64\x6F\x62\x65\x3A\x64\x6F\x63\x69\x64\x3A\x70\x68\x6F\x74\x6F\x73\x68\x6F\x70\x3A\x65\x35\x65\x61\x30\x33\x31\x63\x2D\x34\x61\x66\x32\x2D\x63\x31\x34\x33\x2D\x38\x35\x65\x39\x2D\x34\x61\x66\x64\x62\x34\x63\x39\x38\x31\x39\x36\x22\x20\x78\x6D\x70\x4D\x4D\x3A\x4F\x72\x69\x67\x69\x6E\x61\x6C\x44\x6F\x63\x75\x6D\x65\x6E\x74\x49\x44\x3D\x22\x78\x6D\x70\x2E\x64\x69\x64\x3A\x36\x65\x65\x64\x64\x63\x61\x38\x2D\x38\x66\x38\x32\x2D\x38\x39\x34\x35\x2D\x61\x37\x66\x36\x2D\x33\x62\x32\x34\x35\x62\x35\x62\x64\x31\x38\x64\x22\x20\x64\x63\x3A\x66\x6F\x72\x6D\x61\x74\x3D\x22\x69\x6D\x61\x67\x65\x2F\x70\x6E\x67\x22\x20\x70\x68\x6F\x74\x6F\x73\x68\x6F\x70\x3A\x43\x6F\x6C\x6F\x72\x4D\x6F\x64\x65\x3D\x22\x33\x22\x3E\x20\x3C\x78\x6D\x70\x4D\x4D\x3A\x48\x69\x73\x74\x6F\x72\x79\x3E\x20\x3C\x72\x64\x66\x3A\x53\x65\x71\x3E\x20\x3C\x72\x64\x66\x3A\x6C\x69\x20\x73\x74\x45\x76\x74\x3A\x61\x63\x74\x69\x6F\x6E\x3D\x22\x63\x72\x65\x61\x74\x65\x64\x22\x20\x73\x74\x45\x76\x74\x3A\x69\x6E\x73\x74\x61\x6E\x63\x65\x49\x44\x3D\x22\x78\x6D\x70\x2E\x69\x69\x64\x3A\x36\x65\x65\x64\x64\x63\x61\x38\x2D\x38\x66\x38\x32\x2D\x38\x39\x34\x35\x2D\x61\x37\x66\x36\x2D\x33\x62\x32\x34\x35\x62\x35\x62\x64\x31\x38\x64\x22\x20\x73\x74\x45\x76\x74\x3A\x77\x68\x65\x6E\x3D\x22\x32\x30\x32\x35\x2D\x30\x38\x2D\x32\x32\x54\x30\x30\x3A\x32\x30\x3A\x33\x39\x2B\x30\x33\x3A\x30\x30\x22\x20\x73\x74\x45\x76\x74\x3A\x73\x6F\x66\x74\x77\x61\x72\x65\x41\x67\x65\x6E\x74\x3D\x22\x41\x64\x6F\x62\x65\x20\x50\x68\x6F\x74\x6F\x73\x68\x6F\x70\x20\x43\x43\x20\x32\x30\x31\x39\x20\x28\x57\x69\x6E\x64\x6F\x77\x73\x29\x22\x2F\x3E\x20\x3C\x72\x64\x66\x3A\x6C\x69\x20\x73\x74\x45\x76\x74\x3A\x61\x63\x74\x69\x6F\x6E\x3D\x22\x73\x61\x76\x65\x64\x22\x20\x73\x74\x45\x76\x74\x3A\x69\x6E\x73\x74\x61\x6E\x63\x65\x49\x44\x3D\x22\x78\x6D\x70\x2E\x69\x69\x64\x3A\x65\x62\x66\x62\x66\x31\x66\x63\x2D\x35\x61\x36\x32\x2D\x30\x37\x34\x31\x2D\x62\x37\x65\x31\x2D\x39\x36\x61\x62\x32\x62\x61\x30\x64\x33\x32\x35\x22\x20\x73\x74\x45\x76\x74\x3A\x77\x68\x65\x6E\x3D\x22\x32\x30\x32\x35\x2D\x30\x38\x2D\x32\x32\x54\x30\x30\x3A\x32\x30\x3A\x33\x39\x2B\x30\x33\x3A\x30\x30\x22\x20\x73\x74\x45\x76\x74\x3A\x73\x6F\x66\x74\x77\x61\x72\x65\x41\x67\x65\x6E\x74\x3D\x22\x41\x64\x6F\x62\x65\x20\x50\x68\x6F\x74\x6F\x73\x68\x6F\x70\x20\x43\x43\x20\x32\x30\x31\x39\x20\x28\x57\x69\x6E\x64\x6F\x77\x73\x29\x22\x20\x73\x74\x45\x76\x74\x3A\x63\x68\x61\x6E\x67\x65\x64\x3D\x22\x2F\x22\x2F\x3E\x20\x3C\x2F\x72\x64\x66\x3A\x53\x65\x71\x3E\x20\x3C\x2F\x78\x6D\x70\x4D\x4D\x3A\x48\x69\x73\x74\x6F\x72\x79\x3E\x20\x3C\x2F\x72\x64\x66\x3A\x44\x65\x73\x63\x72\x69\x70\x74\x69\x6F\x6E\x3E\x20\x3C\x2F\x72\x64\x66\x3A\x52\x44\x46\x3E\x20\x3C\x2F\x78\x3A\x78\x6D\x70\x6D\x65\x74\x61\x3E\x20\x3C\x3F\x78\x70\x61\x63\x6B\x65\x74\x20\x65\x6E\x64\x3D\x22\x72\x22\x3F\x3E\xA3\x67\x03\x7C\x00\x00\x08\xA8\x49\x44\x41\x54\x78\x9C\xED\x9D\x7B\x8C\x5C\x55\x1D\xC7\x3F\xE7\xCE\x6C\x5B\xB6\xDD\x47\xEB\x52\xD1\x8A\x80\x15\x64\x49\x05\xC4\x6A\x5B\x24\x35\x94\x4A\x8D\x10\x45\x93\x6A\x7C\xF1\x88\x26\x48\x14\x0D\xD1\xE0\x83\xF8\xC2\x44\x6D\x34\xF2\x4F\x01\x13\x01\x53\xC5\xC6\x06\x0C\x8F\x56\x89\x58\x01\x45\x8A\xB6\xD0\x85\x96\x4A\x5B\x5E\xB5\xB4\xBB\xA5\xB0\xD0\xED\xB4\xDB\xEE\xEE\xCC\x3D\xFE\xF1\xDB\xB9\x73\x67\xE6\xDE\x3B\xF7\xCE\x9C\x7B\xEF\xCC\x32\x9F\x64\x93\xBB\x77\xCF\x39\xF7\xB7\xDF\x39\xCF\xDF\x3D\xE7\x37\x4A\x6B\x4D\x1B\x73\x58\x69\x1B\x30\xD5\xC8\x16\x2F\xB4\xD6\xE4\x26\xF2\xFC\x6B\x78\x98\x75\xFB\xF6\x73\x24\xAF\x92\xB4\xE3\x34\xA0\x1F\x58\x00\x9C\x01\x9C\x02\x9C\x08\xF4\x01\x27\xB8\xD2\xE5\x81\x09\xE0\x30\x70\x08\x18\x04\x5E\x00\xFE\x0B\x3C\x03\xEC\x02\x8E\x24\x63\xB2\x8D\x9D\xD9\x4E\x21\xFB\x28\xDA\x1A\x62\xFD\xB9\x0F\x00\x2E\x41\x8F\xE6\x0B\x6C\x79\xE3\x10\xF7\x0E\x1E\x48\x42\xCC\x59\xC0\x42\xE0\x23\xC0\x85\xC0\x39\x40\x67\x84\xFC\xF3\x7C\xEE\xEF\x01\x36\x01\x1B\x81\x47\x80\x97\xEA\xB6\xB0\x26\x16\xCA\x3E\x15\xCB\x7E\x99\x82\x7A\xDD\xB9\xEB\x08\xBA\x33\x77\x84\x7B\x06\x87\x18\x1E\xB7\xE3\xB3\x01\xCE\x07\x3E\x0B\x5C\x82\xD4\x4A\xD3\x9C\x3A\xF9\xF3\x39\xA4\xA6\xFE\x1B\x58\x07\xDC\x0F\x1C\x34\xFD\x30\xA5\xBB\x51\xF6\x7C\x94\xB5\xC7\xB9\xE7\xF4\xA1\x1B\x86\x0E\x30\x74\x3C\x6F\xFA\x99\x20\x35\xEF\x2A\xE0\xB1\xC9\x9F\xAF\x11\x8F\x98\x95\xCC\x02\x96\x03\xBF\x01\x9E\x06\x56\x03\x67\x9B\x7D\x84\x42\xD9\xF3\x50\xF6\x3B\x9C\x3B\x8E\xA0\x3B\x72\xA3\x66\x9F\x05\x19\xE0\x8B\xC0\x16\xE0\x0E\xA4\x76\xA6\xC5\x49\xC0\x57\x81\xCD\x93\xB6\x18\xFB\x40\x95\x9E\x85\x65\x97\x8A\x73\x04\xB5\xCD\xCE\x9E\x96\x01\xFF\x00\x7E\x07\x9C\x65\xB4\xE4\xC6\x98\x8E\xB4\x96\x27\x80\x1B\x81\x9E\xC6\x8B\xB4\x50\xF6\xC9\xAE\xDF\xCC\x72\x22\x70\x0B\x32\x28\x7C\xC8\x70\xD9\x26\x99\x03\x7C\x1F\x78\x1C\xE9\xCF\x1B\x42\xE9\xD2\xE7\x62\x52\xD0\x4B\x91\x41\xE0\x1A\x20\xD1\x39\x57\x03\xF4\x03\x1B\x90\x4A\x30\xAB\xFE\x62\x32\xCE\x95\x29\x41\xBF\x09\xDC\x07\xBC\xCB\x50\x79\x49\x73\x0D\xF0\x20\xF0\xEE\x46\x0B\x6A\x54\xD0\x4E\xE0\x36\xE0\x97\x06\xCA\x4A\x9B\x25\xC8\xDC\xF5\xC2\x46\x0A\x69\x44\x84\xB9\xC0\x5F\x80\x2F\x35\x62\x40\x93\x31\x0F\xF9\x9F\xAE\xAC\xB7\x80\x6C\xED\x24\x9E\xBC\x05\x58\x0F\x7C\xB0\xDE\x07\x87\x60\x08\x78\x18\x78\x11\x38\x8A\x2C\x43\x17\x00\x4B\x29\x5F\x8E\x9A\x66\x06\xF0\xDB\xC9\x67\xDC\x1A\x35\x73\x3D\x82\x76\x03\x7F\x22\x3E\x31\xC7\x80\x9F\x22\xFF\xCC\xAB\x1E\x7F\xEF\x07\xBE\x07\x7C\x21\xA6\xE7\x17\x59\x0D\x8C\x00\x6B\xA3\x64\x8A\x2A\x68\x27\x70\x37\xF0\xE1\x88\xF9\xC2\x62\x23\xCD\xED\x8F\x01\x69\x9E\x45\x16\x0C\x47\x80\xAF\xC4\x64\x07\x48\x77\x78\x07\x90\x43\x5A\x63\xE8\x4C\x51\xB8\x0D\x71\x68\xC4\xC5\xBD\x04\x8B\xE9\xE6\xDB\xC0\xBE\xF8\x4C\x01\x64\x21\xF0\x07\x22\xB4\xC6\x28\x82\x5E\x87\x38\x36\xE2\x24\x4A\xF3\x3A\x0C\xFC\x39\x2E\x43\x5C\x74\x01\xBF\x07\x7A\xC3\x24\x0E\x2B\xE8\x62\xE0\x67\x75\x1A\x14\x96\x3C\xD2\x9C\xA3\xF0\x78\x1C\x86\x78\x70\x06\xD2\xA7\xD6\x24\x8C\xA0\x3D\xC0\xED\x48\xF5\x8F\x93\x31\x64\x34\x8F\xC2\x70\x1C\x86\xF8\xF0\x79\xC4\x0F\x10\x48\x18\x41\x57\x91\x8C\x83\x23\x0B\x74\x44\xCC\x13\xE7\xF4\xC9\x8B\x9B\x80\xF9\x41\x09\x6A\x09\xBA\x18\xF8\xB2\x31\x73\x82\x99\x0E\xBC\x33\x62\x1E\xC3\xFE\xCD\x9A\xF4\x50\xA3\xEB\x0B\x12\xD4\x42\x6A\x67\x26\x20\x8D\x69\x2E\x8D\x98\xFE\x63\xB1\x58\x11\xCC\x4A\x02\x66\x3A\x41\x82\x7E\x02\x59\x95\x24\xC9\x55\xC0\x7B\x42\xA6\xBD\x02\x38\x2F\x46\x5B\x82\xF8\x31\x3E\x15\xCD\x4F\x50\x0B\x99\xE7\x25\x4D\x2F\x70\x17\x70\x66\x8D\x74\x97\x00\x37\xC7\x6E\x8D\x3F\x4B\x80\x15\x5E\x7F\xF0\x5B\x29\x2D\x07\x16\xC5\x66\x4E\x30\xEF\x45\xA6\x43\x6B\x80\x07\x80\xBD\xC8\x0A\x6A\x06\x32\x38\x7E\x1C\xF8\x34\xE9\x7B\xB7\xAE\x43\x1C\x29\x65\x78\x09\xAA\x80\xEB\x63\x37\x27\x98\x5E\xE0\x1B\x93\x3F\x13\x80\x46\x6C\x4D\x5B\x44\x37\x17\x21\x35\xB5\x6C\x2E\xEC\x65\xE0\xFB\x90\x77\x42\xCD\x42\x07\x30\x8D\xE6\x12\x13\xA4\xE2\x7D\xBD\xF2\xA6\x97\x91\x2B\x69\x9D\x57\x18\x69\xB3\x02\xF1\x0B\x3B\x54\x0A\x3A\x0D\xF8\x64\x62\xE6\xB4\x3E\xB3\xA9\x18\x9C\x2A\x05\x3D\x17\x59\xB7\xB6\x09\xCF\x65\xEE\x5F\x2A\x07\xA5\x65\xA4\xD3\xDC\x47\x91\x81\x27\x0A\x1A\x69\x51\xD3\xCC\x9B\x13\x89\x25\x88\x47\x2A\x07\xD5\x82\xC6\xE5\x38\x0E\x62\x10\x19\x31\xA3\x6E\x5D\xD1\xC0\xD5\xC0\x0D\xC6\x2D\x8A\xC6\xDB\x90\xA9\xDE\x26\x28\x17\xB4\x1B\x69\xF2\x49\xF3\x32\xB0\xB3\xCE\xBC\xC6\x37\x80\xD5\xC9\x22\x26\x05\x75\xF7\xA1\xF3\x81\xB7\xA6\x60\xCC\xDE\x06\xF2\xD6\xFB\x92\xD1\x34\xEF\x2F\x5E\xB8\x05\x3D\x9D\x74\xFA\xCF\xFF\xA5\xF0\x4C\xD3\x38\xFE\x07\xCB\xEB\x66\xC2\x3C\x93\xD2\x73\x4D\xE2\x6C\x00\x76\x0B\x7A\x4A\x0A\x86\x80\xBC\x6B\x8F\xEA\x07\x6D\x36\x66\x14\x2F\xDC\x82\xBE\x3D\x05\x43\x00\xBE\x05\x6C\x47\xDE\xF5\x5F\x46\xF2\x5E\x78\x13\x38\x53\x3E\xB7\xA0\xFD\x29\x18\x52\xA4\x1B\xF8\x14\x70\x0F\xF2\x2A\x39\xED\xB9\x65\xDD\xB8\x05\xED\x4A\xCD\x8A\x72\x96\x22\xFB\x37\x5B\x12\xB7\xA0\xCD\x72\x02\x6C\x3C\x6D\x03\x1A\xA1\xD9\x5C\x62\x2D\x8F\x5B\xD0\xB6\xCB\xCE\x00\x6E\x41\x27\x52\xB3\x62\x0A\xE1\x16\x74\x30\x35\x2B\xA6\x10\x6E\x41\x77\xA5\x66\x45\xEB\xE3\x74\x97\x6E\x41\xA7\xC2\x9A\x3A\x2D\x0A\xC5\x0B\xB7\xA0\xBB\x53\x30\x64\xAA\xF0\x4A\xF1\xA2\x2D\xA8\x19\x9E\x2F\x5E\xB8\x05\x7D\x0E\x39\x83\xDE\x26\x3A\x03\xC5\x0B\xB7\xA0\x07\x91\x83\xFC\x6D\xA2\xB3\xB9\x78\x51\xB9\x52\xDA\x94\xB0\x21\x53\x81\x11\x60\x6B\xF1\x97\x4A\x41\x1F\x4A\xD6\x96\x29\xC1\x00\x3E\x83\x12\x48\x0D\x7D\x85\x36\x51\x28\x3B\x72\x53\x29\xE8\x08\xF0\xD7\xE4\x6C\x69\x79\xC6\x90\xD3\xCC\x0E\x5E\xDE\xA6\xB0\xE7\x84\xDA\xC0\x7F\xA8\x98\x6E\x7A\x09\xFA\x70\x65\xA2\x36\xBE\x54\x6D\xFA\xF5\x12\xF4\x38\xF0\xAB\xF8\x6D\x69\x79\x9E\x45\x5E\xD7\x94\xE1\xE7\x60\x5E\x4B\xFC\xC7\xFE\x5A\x9D\x5F\xE3\xF1\x76\xC1\x4F\xD0\x1C\x21\x4F\x8E\xBD\x49\xD9\x87\x04\xA8\xA9\x22\xE8\x15\xC8\xAD\x48\xA4\xAE\xA4\xE9\x20\xFC\xDB\x83\xB4\xB6\xE2\xDC\x88\xCF\x32\x3D\x48\xD0\xC3\x48\xE4\x98\xA4\x79\x89\xC9\xAD\x81\x21\xD8\x13\xA3\x1D\x7E\x6C\x45\x0E\x54\x78\x52\xEB\x13\x5E\x8B\x6C\x19\xBC\xC0\xA4\x45\x15\x3C\x0A\x3C\x85\x44\x6E\x78\x11\x59\x17\x87\x0D\x08\x78\x17\xF2\x01\x9C\x89\x04\xB7\x3A\x0D\xD9\x1A\x79\x72\x50\xA6\x06\xD0\xC0\x77\x08\x78\x33\xEB\x08\x3A\x77\xFA\x34\x0E\x8E\x55\xA5\xB3\x91\x43\xFE\x8F\x61\x24\x68\x94\x27\xD7\x23\xE1\x89\xEA\x41\x23\x91\xCB\xB6\xB8\xEE\xDD\x82\x44\xB9\x89\x83\x9B\x80\xBF\x05\x25\x70\x9A\xFC\xC2\xD9\x3D\x58\xCA\xB3\xEB\xDA\x81\x84\x11\x8A\x8B\x19\xB5\x93\x44\x22\xAE\x7E\x75\x80\x10\x5D\x60\x49\xD0\x39\x3D\xF4\x77\xF9\xC6\x82\xBA\x1D\x89\x6C\xF0\x66\x65\x14\x09\xDD\x51\x73\x97\xB5\x23\xE8\xFC\x99\x9D\x2C\x9B\x3B\x87\x79\x27\xF8\x56\x98\x6B\x91\x4D\x5D\xA6\x29\xD4\x4E\x12\x89\x38\xE2\x75\x5E\x0B\x6C\x0B\x93\xD0\x69\x1E\x33\xB3\x59\xCE\xEE\xE9\x66\xB4\x60\xB3\x7E\xF0\x00\x07\xC7\xAA\x5E\xD3\xBF\x81\x1C\x09\xDC\x88\x7F\x40\xD4\x7A\xE8\xC2\xEC\xBE\x2A\xD3\x81\x12\x7E\x82\x04\x73\x09\x85\x23\xA8\x02\x7A\x3B\xB2\x2C\x9E\xD3\x8B\xD6\x05\xEE\x1F\x1C\xE2\xB5\xF1\xAA\xED\x4E\x3B\x91\x23\xD8\x0F\x22\x81\x03\x4D\xB0\x06\xF1\xDA\x98\xA2\xD7\x60\x59\xAB\x80\x1F\x44\xC9\x50\xD6\x81\x5B\x4A\xD1\xDB\x91\xE5\x82\xBE\x3E\xB4\xCA\xB3\x6E\xEF\x10\xA3\x85\xAA\x53\xCC\x4F\x21\x35\xF5\x3E\x64\x1B\x62\xA3\xF4\x19\x28\x23\x0E\x56\x23\x53\xA4\x10\x94\x7A\x99\xAA\x89\xBD\xA5\x14\xDD\x1D\x59\x3E\x30\xBB\x8F\xD3\xBB\x66\xA2\xBC\x37\xE5\x3D\x82\x9C\xA7\xF7\x0A\x54\x35\x15\xB8\x19\xE9\x37\x43\xA1\x55\x29\x54\x8A\xE7\x4A\x49\x01\xDD\xD9\x0E\x4E\x9A\x3E\x13\xE5\x3D\x95\x02\x11\x75\x39\x21\x3B\xEB\x16\xC1\x06\xBE\x8B\x84\x35\x0E\x89\x46\x5B\x25\x3F\x92\xEF\xD2\xD3\x52\x8A\xCE\x6C\x07\x2A\x78\x59\xBD\x0D\x59\x99\x84\x8E\xBC\xD5\xC4\x1C\x02\x3E\x03\xFC\x3C\x5A\xB6\x02\xB6\x55\x8A\x8E\x14\xB8\x3F\x34\xE4\xE6\xD1\xD7\x90\xED\xDC\xAB\x68\x9E\x4D\xBB\x51\xD9\x8A\xB4\xB6\xBB\xA3\x65\xD3\x68\xF5\x3A\xDA\x2A\x1D\xB5\xF2\xD5\x6C\xDC\xB6\x99\xD0\x1A\x3B\xDC\x57\x5B\xE4\x91\x0E\xFC\x62\x64\xD0\x6A\x15\xC6\x91\xC0\x85\x4B\x81\x27\xA3\x65\xD5\xC8\x97\x03\xBC\x80\x56\x23\xCE\x5D\x4F\x41\x35\x70\xAC\x60\x33\x9A\x2F\x44\xAD\x72\x1B\x11\x47\xCA\x8F\x10\x6F\x55\x33\xF3\x10\x72\xB6\xF5\x06\xA2\x07\xE0\x02\x40\xAB\x1C\xDA\xDA\x05\xAA\xE4\x03\xF1\xAD\xA1\xC7\x0A\x05\x46\x26\xEA\xDA\x83\x7B\x14\x89\x1A\xB3\x08\xB8\x13\xA9\xBD\xCD\xC4\x6E\x24\x86\xDF\x45\xD4\xED\x94\xD1\x40\x01\x9D\xD9\x8D\xB6\x06\x09\x9C\x36\x01\xD8\x5A\x73\xBC\x60\x93\xCB\x37\xB4\x2A\xDC\x89\x84\xA5\x3C\x1F\x09\xC6\x97\xD0\x77\x74\xF8\x32\x80\xC4\xB2\x5F\x48\xC3\x6F\x76\x35\xDA\x7A\x15\x3B\xB3\xAD\x6C\xCA\x04\x3E\x9E\x19\x8D\xF4\xA1\xC7\x0A\x46\x96\xD9\x5B\x80\xCB\x91\x80\xD1\x2B\x91\x91\xF4\x1C\x13\x05\x87\x60\x18\x59\xD5\xAD\x01\xFE\x8E\x91\xD6\xA2\xD1\x2A\x87\x9D\x79\x02\x5B\xED\xA7\xD2\x75\xE0\xEB\xEA\x92\x2E\xD7\xE8\xA0\xFD\x3C\x12\xE6\xEC\x17\x48\x3C\xCE\x15\xC0\x47\x91\x23\xE5\x26\x0F\x7A\xED\x43\xE6\xC8\x1B\x80\x7F\x22\xA1\x87\xCD\xA1\x8E\x61\x67\xB6\x61\x67\x76\x80\xAA\x5E\x31\x7B\x0A\xAA\x80\x8C\xA2\xD6\x1C\xB4\x5E\xF2\xC8\x96\x9F\x4D\xC0\x0F\x91\x13\x7C\xE7\x21\xC2\x2E\x40\xBE\x1C\xA5\x8F\x70\xB3\xB6\x51\x60\x3F\xB2\x9D\x7D\x00\x19\xA9\xB7\x13\xDB\xB6\xCC\x02\xB6\xB5\x0B\x3B\xBB\x19\xAD\x72\x78\xCD\x12\x55\xFB\x1B\xBF\xCC\xD2\x3E\xF8\x65\x98\xFF\x03\x7C\xB3\xE1\x5B\xCC\x68\x2D\x36\x00\x00\x00\x00\x49\x45\x4E\x44\xAE\x42\x60\x82"
@@ -67,291 +88,14 @@ local mask_notify_id = 0
 local current_theme = new.int(0)
 
 -- =======================================================
--- [ ВСТРОЕННАЯ СИСТЕМА АВТООБНОВЛЕНИЯ ]
+-- [ СИСТЕМА НАСТРОЕК ]
 -- =======================================================
-local http = require("socket.http")
-local lfs = require("lfs")
-
-local AutoUpdateSystem = {}
-AutoUpdateSystem.__index = AutoUpdateSystem
-
-function AutoUpdateSystem:new(config)
-    config = config or {}
-    local self = setmetatable({}, AutoUpdateSystem)
-    
-    self.version_file_url = config.version_file_url or ""
-    self.script_file_url = config.script_file_url or ""
-    self.script_name = config.script_name or "SmartWantedV2"
-    self.script_dir = getWorkingDirectory() .. "\\moonloader\\"
-    self.backup_dir = getWorkingDirectory() .. "\\moonloader\\backups\\"
-    self.timeout = config.timeout or 30
-    self.notify_callback = config.notify_callback
-    self.current_version = nil
-    self.latest_version = nil
-    self.is_updating = false
-    
-    self:create_backup_dir()
-    return self
-end
-
-function AutoUpdateSystem:notify(message, icon_type)
-    icon_type = icon_type or "info"
-    if self.notify_callback then
-        self.notify_callback(message, icon_type)
-    else
-        print("[AutoUpdate] " .. message)
-    end
-end
-
-function AutoUpdateSystem:create_backup_dir()
-    if not lfs.attributes(self.backup_dir, "mode") then
-        lfs.mkdir(self.backup_dir)
-    end
-end
-
-function AutoUpdateSystem:download_file(url, save_path)
-    if self.is_updating then
-        self:notify(u8"Обновление уже в процессе", "warn")
-        return false
-    end
-    
-    self:notify(u8"Загрузка: " .. url, "info")
-    
-    local success, response = pcall(function()
-        return http.request(url)
-    end)
-    
-    if not success or not response or response == "" then
-        self:notify(u8"Ошибка загрузки", "error")
-        return false
-    end
-    
-    if response:find("404") or response:find("403") or response:find("500") then
-        self:notify(u8"Ошибка сервера", "error")
-        return false
-    end
-    
-    local file = io.open(save_path, "wb")
-    if not file then
-        self:notify(u8"Не удалось открыть файл для записи", "error")
-        return false
-    end
-    
-    file:write(response)
-    file:close()
-    
-    self:notify(u8"Файл загружен", "success")
-    return true
-end
-
-function AutoUpdateSystem:parse_version(version_text)
-    if not version_text then return nil end
-    local version = version_text:match("([0-9]+%.?[0-9]*%.?[0-9]*)")
-    return version or version_text:gsub("\n", ""):gsub(" ", "")
-end
-
-function AutoUpdateSystem:compare_versions(v1, v2)
-    if not v1 or not v2 then return false end
-    
-    local v1_parts = {}
-    local v2_parts = {}
-    
-    for part in v1:gmatch("[0-9]+") do
-        table.insert(v1_parts, tonumber(part))
-    end
-    
-    for part in v2:gmatch("[0-9]+") do
-        table.insert(v2_parts, tonumber(part))
-    end
-    
-    for i = 1, math.max(#v1_parts, #v2_parts) do
-        local p1 = v1_parts[i] or 0
-        local p2 = v2_parts[i] or 0
-        
-        if p1 > p2 then return true
-        elseif p1 < p2 then return false end
-    end
-    
-    return false
-end
-
-function AutoUpdateSystem:get_current_version()
-    local script_path = self.script_dir .. self.script_name .. ".lua"
-    local file = io.open(script_path, "r")
-    
-    if not file then
-        self:notify(u8"Скрипт не найден", "warn")
-        return nil
-    end
-    
-    local content = file:read("*a")
-    file:close()
-    
-    local version = content:match("version[%s:]*([0-9]+%.?[0-9]*%.?[0-9]*)")
-    if version then
-        self.current_version = version
-        return version
-    end
-    
-    self:notify(u8"Версия не найдена в скрипте", "warn")
-    return nil
-end
-
-function AutoUpdateSystem:fetch_latest_version()
-    local temp_file = self.script_dir .. ".version_temp.txt"
-    
-    if not self:download_file(self.version_file_url, temp_file) then
-        return nil
-    end
-    
-    local file = io.open(temp_file, "r")
-    if not file then
-        self:notify(u8"Ошибка чтения версии", "error")
-        return nil
-    end
-    
-    local content = file:read("*a")
-    file:close()
-    os.remove(temp_file)
-    
-    local version = self:parse_version(content)
-    self.latest_version = version
-    return version
-end
-
-function AutoUpdateSystem:backup_current_script()
-    local script_path = self.script_dir .. self.script_name .. ".lua"
-    local timestamp = os.date("%Y%m%d_%H%M%S")
-    local backup_path = self.backup_dir .. self.script_name .. "_backup_" .. timestamp .. ".lua"
-    
-    local file_r = io.open(script_path, "rb")
-    if not file_r then
-        self:notify(u8"Не удалось открыть оригинальный скрипт", "error")
-        return false
-    end
-    
-    local content = file_r:read("*a")
-    file_r:close()
-    
-    local file_w = io.open(backup_path, "wb")
-    if not file_w then
-        self:notify(u8"Не удалось создать резервную копию", "error")
-        return false
-    end
-    
-    file_w:write(content)
-    file_w:close()
-    
-    self:notify(u8"Резервная копия создана", "info")
-    return true
-end
-
-function AutoUpdateSystem:install_update()
-    if self.is_updating then
-        self:notify(u8"⚠️ Обновление уже в процессе", "warn")
-        return false
-    end
-    
-    self.is_updating = true
-    
-    if not self:backup_current_script() then
-        self.is_updating = false
-        return false
-    end
-    
-    local temp_script = self.script_dir .. ".script_temp.lua"
-    if not self:download_file(self.script_file_url, temp_script) then
-        self.is_updating = false
-        return false
-    end
-    
-    local script_path = self.script_dir .. self.script_name .. ".lua"
-    os.remove(script_path)
-    
-    local file_r = io.open(temp_script, "rb")
-    if not file_r then
-        self:notify(u8"Ошибка при перемещении файла", "error")
-        self.is_updating = false
-        return false
-    end
-    
-    local content = file_r:read("*a")
-    file_r:close()
-    
-    local file_w = io.open(script_path, "wb")
-    if not file_w then
-        self:notify(u8"Ошибка при записи обновления", "error")
-        self.is_updating = false
-        return false
-    end
-    
-    file_w:write(content)
-    file_w:close()
-    os.remove(temp_script)
-    
-    self:notify(u8"Обновление установлено! Перезагрузка...", "success")
-    self.is_updating = false
-    return true
-end
-
-function AutoUpdateSystem:check(auto_install)
-    auto_install = auto_install or false
-    self:notify(u8"Проверка обновлений...", "info")
-    
-    local current = self:get_current_version()
-    if not current then
-        self:notify(u8"Не удалось определить текущую версию", "warn")
-        return false
-    end
-    
-    local latest = self:fetch_latest_version()
-    if not latest then
-        self:notify(u8"Не удалось получить версию на сервере", "warn")
-        return false
-    end
-    
-    self:notify(u8"Текущая: " .. current .. " | Последняя: " .. latest, "info")
-    
-    if self:compare_versions(latest, current) then
-        self:notify(u8"Доступна новая версия: " .. latest, "success")
-        
-        if auto_install then
-            return self:install_update()
-        end
-        
-        return true
-    else
-        self:notify(u8"Вы используете последнюю версию", "info")
-        return false
-    end
-end
-
-function AutoUpdateSystem:check_async(callback)
-    lua_thread.create(function()
-        local has_update = self:check()
-        if callback then
-            callback(has_update)
-        end
-    end)
-end
-
--- =======================================================
--- [ ПЕРЕМЕННЫЕ СКРИПТА ]
--- =======================================================
-local auto_update_enabled = new.bool(true)
-local auto_update_instance = nil
-local script_version = "2.0.5"
-
 local config_dir = getGameDirectory() .. '\\moonloader\\config\\'
 local config_file = ""
 local current_server = ""
 local config_loading = false
-
 local window_settings_file = config_dir .. "SmartWanted_window_settings.json"
 
--- =======================================================
--- [ СИСТЕМА НАСТРОЕК ]
--- =======================================================
 local default_colors = {
     success = { bg = {0.12, 0.12, 0.12, 1.0}, accent = {0.1, 0.8, 0.3, 1.0}, title = {1, 1, 1, 1}, text = {0.8, 0.8, 0.8, 1} },
     error   = { bg = {0.12, 0.12, 0.12, 1.0}, accent = {0.9, 0.2, 0.2, 1.0}, title = {1, 1, 1, 1}, text = {0.8, 0.8, 0.8, 1} },
@@ -368,7 +112,6 @@ local window_settings = {
         mask_color = 8025703,
         current_theme = 0,
         auto_update_enabled = true,
-        
         notif_pos = 0,
         notif_x = 0, notif_y = 0,
         notif_width = 300,
@@ -387,9 +130,7 @@ function deepcopy(orig)
     local copy
     if orig_type == 'table' then
         copy = {}
-        for orig_key, orig_value in next, orig, nil do
-            copy[deepcopy(orig_key)] = deepcopy(orig_value)
-        end
+        for orig_key, orig_value in next, orig, nil do copy[deepcopy(orig_key)] = deepcopy(orig_value) end
     else copy = orig end
     return copy
 end
@@ -411,38 +152,22 @@ local ui_design_style = new.int(0)
 local ui_style_names = {"success", "error", "warn", "info"}
 local ui_style_labels = {u8"Успех (Success)", u8"Ошибка (Error)", u8"Внимание (Warn)", u8"Инфо (Info)"}
 local ui_test_mode = new.int(0)
-local notif_custom_mode_active = false
-local preview_notif = nil
-local preview_last_x = 0
-local preview_last_y = 0 
 
 local vkey_names = {
     [1] = "Left Mouse", [2] = "Right Mouse", [3] = "Cancel", [4] = "Middle Mouse",
-    [5] = "XButton1", [6] = "XButton2",
     [8] = "Backspace", [9] = "Tab", [13] = "Enter", [16] = "Shift", [17] = "Ctrl", [18] = "Alt",
-    [19] = "Pause", [20] = "Caps", [27] = "Esc",
-    [32] = "Space", [33] = "Page Up", [34] = "Page Down", [35] = "End", [36] = "Home",
-    [37] = "Left", [38] = "Up", [39] = "Right", [40] = "Down",
-    [45] = "Ins", [46] = "Del",
+    [19] = "Pause", [20] = "Caps", [27] = "Esc", [32] = "Space", [33] = "Page Up", [34] = "Page Down",
+    [35] = "End", [36] = "Home", [37] = "Left", [38] = "Up", [39] = "Right", [40] = "Down",
     [48] = "0", [49] = "1", [50] = "2", [51] = "3", [52] = "4", [53] = "5", [54] = "6", [55] = "7", [56] = "8", [57] = "9",
     [65] = "A", [66] = "B", [67] = "C", [68] = "D", [69] = "E", [70] = "F", [71] = "G", [72] = "H", [73] = "I", [74] = "J",
     [75] = "K", [76] = "L", [77] = "M", [78] = "N", [79] = "O", [80] = "P", [81] = "Q", [82] = "R", [83] = "S", [84] = "T",
     [85] = "U", [86] = "V", [87] = "W", [88] = "X", [89] = "Y", [90] = "Z",
-    [91] = "LWin", [92] = "RWin", [93] = "Apps",
-    [96] = "Numpad 0", [97] = "Numpad 1", [98] = "Numpad 2", [99] = "Numpad 3", [100] = "Numpad 4",
-    [101] = "Numpad 5", [102] = "Numpad 6", [103] = "Numpad 7", [104] = "Numpad 8", [105] = "Numpad 9",
-    [106] = "Numpad *", [107] = "Numpad +", [109] = "Numpad -", [110] = "Numpad .", [111] = "Numpad /",
     [112] = "F1", [113] = "F2", [114] = "F3", [115] = "F4", [116] = "F5", [117] = "F6", [118] = "F7", [119] = "F8",
-    [120] = "F9", [121] = "F10", [122] = "F11", [123] = "F12",
-    [144] = "Num Lock", [145] = "Scroll Lock",
-    [160] = "LShift", [161] = "RShift", [162] = "LCtrl", [163] = "RCtrl", [164] = "LAlt", [165] = "RAlt",
-    [186] = ";", [187] = "=", [188] = ",", [189] = "-", [190] = ".", [191] = "/", [192] = "`",
-    [194] = "Numpad Enter",
-    [219] = "[", [220] = "\\", [221] = "]", [222] = "'"
+    [120] = "F9", [121] = "F10", [122] = "F11", [123] = "F12"
 }
 
 -- =======================================================
--- [ СВОЯ СИСТЕМА УВЕДОМЛЕНИЙ ]
+-- [ СИСТЕМА УВЕДОМЛЕНИЙ ]
 -- =======================================================
 local active_notifs = {}
 local notif_counter = 0
@@ -456,21 +181,14 @@ local function GetColorU32(vec, a) return imgui.GetColorU32Vec4(imgui.ImVec4(vec
 function Notify(title, text, style, duration)
     notif_counter = notif_counter + 1
     table.insert(active_notifs, {
-        id = notif_counter,
-        title = title,
-        text = text,
-        style = style or "info",
-        duration = duration or 4.0,
-        start_time = os.clock(),
-        current_y = nil
+        id = notif_counter, title = title, text = text, style = style or "info",
+        duration = duration or 4.0, start_time = os.clock(), current_y = nil
     })
     return notif_counter
 end
 
 function RemoveNotify(id)
-    for i, n in ipairs(active_notifs) do
-        if n.id == id then n.duration = 0 end
-    end
+    for i, n in ipairs(active_notifs) do if n.id == id then n.duration = 0 end end
 end
 
 function ClearAllNotifs()
@@ -484,20 +202,13 @@ local function RenderCustomNotifications()
     local current_time = os.clock()
     local cfg = window_settings.su
     
-    while #active_notifs > 3 do
-        table.remove(active_notifs, 1)
-    end
+    while #active_notifs > 3 do table.remove(active_notifs, 1) end
     
     if dragging_notif and not isKeyDown(1) then
-        if dragging_notif.id ~= 99999 then
-            window_settings.su.notif_pos = 5
-            window_settings.su.notif_x = dragging_notif.custom_x or cfg.notif_x
-            window_settings.su.notif_y = dragging_notif.custom_y or cfg.notif_y
-            saveWindowSettings()
-        else
-            preview_last_x = dragging_notif.custom_x or cfg.notif_x
-            preview_last_y = dragging_notif.custom_y or cfg.notif_y
-        end
+        window_settings.su.notif_pos = 5
+        window_settings.su.notif_x = dragging_notif.custom_x or cfg.notif_x
+        window_settings.su.notif_y = dragging_notif.custom_y or cfg.notif_y
+        saveWindowSettings()
         dragging_notif = nil
     end
 
@@ -524,63 +235,30 @@ local function RenderCustomNotifications()
 
         local colors = cfg.notif_colors[n.style] or cfg.notif_colors.info
         local width = cfg.notif_width
-        
         local max_text_w = width - 60
         local title_size = imgui.CalcTextSize(n.title, nil, false, max_text_w)
         local text_size = imgui.CalcTextSize(n.text, nil, true, max_text_w)
         local height = math.max(cfg.notif_min_height, title_size.y + text_size.y + 35)
 
         local target_x, target_y
-        if cfg.notif_pos == 0 then
-            target_x = sw - width - margin_x
-            target_y = sh - margin_y - height - target_offset
-            target_offset = target_offset + height + gap
-        elseif cfg.notif_pos == 1 then
-            target_x = margin_x
-            target_y = sh - margin_y - height - target_offset
-            target_offset = target_offset + height + gap
-        elseif cfg.notif_pos == 2 then
-            target_x = sw - width - margin_x
-            target_y = margin_y + target_offset
-            target_offset = target_offset + height + gap
-        elseif cfg.notif_pos == 3 then
-            target_x = margin_x
-            target_y = margin_y + target_offset
-            target_offset = target_offset + height + gap
-        elseif cfg.notif_pos == 4 then
-            target_x = (sw - width) / 2
-            target_y = sh - margin_y - height - target_offset
-            target_offset = target_offset + height + gap
-        else
-            target_x = cfg.notif_x
-            target_y = cfg.notif_y + target_offset
-            target_offset = target_offset + height + gap
-        end
+        if cfg.notif_pos == 0 then target_x = sw - width - margin_x; target_y = sh - margin_y - height - target_offset
+        elseif cfg.notif_pos == 1 then target_x = margin_x; target_y = sh - margin_y - height - target_offset
+        elseif cfg.notif_pos == 2 then target_x = sw - width - margin_x; target_y = margin_y + target_offset
+        elseif cfg.notif_pos == 3 then target_x = margin_x; target_y = margin_y + target_offset
+        elseif cfg.notif_pos == 4 then target_x = (sw - width) / 2; target_y = sh - margin_y - height - target_offset
+        else target_x = cfg.notif_x; target_y = cfg.notif_y + target_offset end
 
+        target_offset = target_offset + height + gap
         if not n.current_y then n.current_y = sh end
-        
-        if elapsed < cfg.notif_fade_in then
-            n.current_y = Lerp(sh, target_y, elapsed / cfg.notif_fade_in)
-        elseif not is_static and (n.duration - elapsed) < cfg.notif_fade_out then
-            n.current_y = target_y
-        else
-            n.current_y = target_y
-        end
+        n.current_y = target_y
 
         local pos_x, pos_y
-        
         if dragging_notif and dragging_notif.id == n.id then
             local mx, my = getCursorPos()
-            pos_x = mx - drag_offset_x
-            pos_y = my - drag_offset_y
-            n.custom_x = pos_x
-            n.custom_y = pos_y
+            pos_x = mx - drag_offset_x; pos_y = my - drag_offset_y
+            n.custom_x, n.custom_y = pos_x, pos_y
         else
-            if not (elapsed < cfg.notif_fade_in or (not is_static and (n.duration - elapsed) < cfg.notif_fade_out)) then
-                n.current_y = Lerp(n.current_y, target_y, 0.15)
-            end
-            pos_x = target_x
-            pos_y = n.current_y
+            pos_x, pos_y = target_x, n.current_y
             if n.custom_x then pos_x = n.custom_x end
             if n.custom_y then pos_y = n.custom_y end
         end
@@ -592,31 +270,19 @@ local function RenderCustomNotifications()
         if isKeyDown(1) and mx >= pos_x and mx <= pos_x + width and my >= pos_y and my <= pos_y + height then
             if not dragging_notif or dragging_notif.id ~= n.id then
                 dragging_notif = n
-                drag_offset_x = mx - pos_x
-                drag_offset_y = my - pos_y
+                drag_offset_x = mx - pos_x; drag_offset_y = my - pos_y
             end
         end
 
-        if cfg.notif_design_style == 0 then 
-            dl:AddRectFilled(p_min, p_max, GetColorU32(colors.bg, alpha), cfg.notif_rounding, 15)
-        elseif cfg.notif_design_style == 1 then 
-            dl:AddRectFilled(p_min, p_max, GetColorU32({0.05, 0.05, 0.05, 0.9}, alpha), cfg.notif_rounding, 15)
-            dl:AddRect(p_min, p_max, GetColorU32(colors.accent, alpha), cfg.notif_rounding, 15, 2.0)
-        elseif cfg.notif_design_style == 2 then 
-            dl:AddRectFilled(p_min, p_max, GetColorU32({colors.bg[1] * 0.7, colors.bg[2] * 0.7, colors.bg[3] * 0.7, colors.bg[4] * 0.8}, alpha), cfg.notif_rounding, 15)
-            dl:AddRect(p_min, p_max, GetColorU32(colors.accent, alpha * 0.5), cfg.notif_rounding, 15, 1.5)
-        elseif cfg.notif_design_style == 3 then 
-            dl:AddRectFilled(p_min, p_max, GetColorU32(colors.accent, alpha * 0.15), cfg.notif_rounding, 15)
-            dl:AddRect(p_min, p_max, GetColorU32(colors.accent, alpha), cfg.notif_rounding, 15, 2.5)
-        end
+        if cfg.notif_design_style == 0 then dl:AddRectFilled(p_min, p_max, GetColorU32(colors.bg, alpha), cfg.notif_rounding, 15)
+        elseif cfg.notif_design_style == 1 then dl:AddRectFilled(p_min, p_max, GetColorU32({0.05, 0.05, 0.05, 0.9}, alpha), cfg.notif_rounding, 15); dl:AddRect(p_min, p_max, GetColorU32(colors.accent, alpha), cfg.notif_rounding, 15, 2.0)
+        elseif cfg.notif_design_style == 2 then dl:AddRectFilled(p_min, p_max, GetColorU32({colors.bg[1] * 0.7, colors.bg[2] * 0.7, colors.bg[3] * 0.7, colors.bg[4] * 0.8}, alpha), cfg.notif_rounding, 15); dl:AddRect(p_min, p_max, GetColorU32(colors.accent, alpha * 0.5), cfg.notif_rounding, 15, 1.5)
+        elseif cfg.notif_design_style == 3 then dl:AddRectFilled(p_min, p_max, GetColorU32(colors.accent, alpha * 0.15), cfg.notif_rounding, 15); dl:AddRect(p_min, p_max, GetColorU32(colors.accent, alpha), cfg.notif_rounding, 15, 2.5) end
 
         local icon_center_y = pos_y + height / 2 - 12
         local icon_x = pos_x + 12
-        if icon_textures[n.style] then
-            dl:AddImage(icon_textures[n.style], imgui.ImVec2(icon_x, icon_center_y), imgui.ImVec2(icon_x + 24, icon_center_y + 24), imgui.ImVec2(0,0), imgui.ImVec2(1,1), GetColorU32({1,1,1,1}, alpha))
-        else
-            dl:AddCircleFilled(imgui.ImVec2(icon_x + 12, icon_center_y + 12), 8, GetColorU32(colors.accent, alpha))
-        end
+        if icon_textures[n.style] then dl:AddImage(icon_textures[n.style], imgui.ImVec2(icon_x, icon_center_y), imgui.ImVec2(icon_x + 24, icon_center_y + 24), imgui.ImVec2(0,0), imgui.ImVec2(1,1), GetColorU32({1,1,1,1}, alpha))
+        else dl:AddCircleFilled(imgui.ImVec2(icon_x + 12, icon_center_y + 12), 8, GetColorU32(colors.accent, alpha)) end
 
         imgui.SetNextWindowPos(p_min)
         imgui.SetNextWindowSize(imgui.ImVec2(width, height))
@@ -635,7 +301,6 @@ local function RenderCustomNotifications()
         end
         imgui.End()
         imgui.PopStyleVar(2)
-
         ::continue::
     end
 end
@@ -643,67 +308,29 @@ end
 -- =======================================================
 -- [ ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ И JSON ]
 -- =======================================================
-function reinitThemeNames()
-    for i = 1, 24 do ImThemeNames[i-1] = theme_names[i] end
-end
-
-function imgui.Tooltip(text)
-    if imgui.IsItemHovered() then
-        imgui.BeginTooltip()
-        imgui.Text(text)
-        imgui.EndTooltip()
-    end
-end
-
-function getKeyName(vkey)
-    return vkey_names[vkey] or ("Key " .. vkey)
-end
-
-function checkPlayerMask(playerId)
-    if not sampIsPlayerConnected(playerId) then return false end
-    return sampGetPlayerColor(playerId) == window_settings.su.mask_color
-end
-
-function normalizeFilename(filename)
-    return filename:gsub("[:/\\*?\"<>|]", "_")
-end
-
-function getServerConfigFilename(server_ip)
-    local normalized_name = normalizeFilename(server_ip)
-    return config_dir .. "SmartWanted_" .. normalized_name .. ".json"
-end
-
-function decodeJson(jsonInString)
-    local status, result = pcall(loadstring('return '..jsonInString))
-    if status then
-        return result
-    else
-        return nil
-    end
-end
+function reinitThemeNames() for i = 1, 24 do ImThemeNames[i-1] = theme_names[i] end end
+function imgui.Tooltip(text) if imgui.IsItemHovered() then imgui.BeginTooltip() imgui.Text(text) imgui.EndTooltip() end end
+function getKeyName(vkey) return vkey_names[vkey] or ("Key " .. vkey) end
+function checkPlayerMask(playerId) if not sampIsPlayerConnected(playerId) then return false end return sampGetPlayerColor(playerId) == window_settings.su.mask_color end
+function normalizeFilename(filename) return filename:gsub("[:/\\*?\"<>|]", "_") end
+function getServerConfigFilename(server_ip) return config_dir .. "SmartWanted_" .. normalizeFilename(server_ip) .. ".json" end
+function decodeJson(jsonInString) local status, result = pcall(loadstring('return '..jsonInString)); return status and result or nil end
 
 function encodeJson(t)
-    local function serialize(val, name, skipindent)
+    local function serialize(val)
         local tmp = {}
         if type(val) == "table" then
             table.insert(tmp, "{")
             for k, v in pairs(val) do
                 local key = type(k) == "string" and string.format("[%q]", k) or string.format("[%s]", k)
-                table.insert(tmp, key .. " = " .. serialize(v, nil, true))
-                table.insert(tmp, ", ")
+                table.insert(tmp, key .. " = " .. serialize(v) .. ", ")
             end
-            if #tmp > 1 then
-                table.remove(tmp)
-            end
+            if #tmp > 1 then table.remove(tmp) end
             table.insert(tmp, "}")
             return table.concat(tmp)
-        elseif type(val) == "string" then
-            return string.format("%q", val)
-        elseif type(val) == "boolean" then
-            return val and "true" or "false"
-        else
-            return tostring(val)
-        end
+        elseif type(val) == "string" then return string.format("%q", val)
+        elseif type(val) == "boolean" then return val and "true" or "false"
+        else return tostring(val) end
     end
     return serialize(t)
 end
@@ -711,22 +338,12 @@ end
 function json(filePath)
     local f = {}
     function f:read()
-        local file = io.open(filePath, "r+")
-        if file then
-            local jsonInString = file:read("*a")
-            file:close()
-            return decodeJson(jsonInString) or {}
-        else
-            return {}
-        end
+        local file = io.open(filePath, "r")
+        if file then local s = file:read("*a"); file:close(); return decodeJson(s) or {} else return {} end
     end
     function f:write(t)
         local file = io.open(filePath, "w")
-        if file then
-            file:write(encodeJson(t))
-            file:flush()
-            file:close()
-        end
+        if file then file:write(encodeJson(t)); file:flush(); file:close() end
     end
     return f
 end
@@ -734,153 +351,66 @@ end
 function loadWindowSettings()
     if doesFileExist(window_settings_file) then
         local config = json(window_settings_file):read()
-        if config and config.su then
-            for key, value in pairs(config.su) do
-                window_settings.su[key] = value
-            end
-        end
+        if config and config.su then for key, value in pairs(config.su) do window_settings.su[key] = value end end
     end
-    
     check_mask[0] = window_settings.su.check_mask or false
     mask_confirm_key = window_settings.su.mask_confirm_key or 13
     mask_confirm_key_name = getKeyName(mask_confirm_key)
     ui_mask_color[0] = window_settings.su.mask_color or 8025703
     current_theme[0] = window_settings.su.current_theme or 0
     auto_update_enabled[0] = window_settings.su.auto_update_enabled ~= false
-    
     ui_notif_pos[0] = window_settings.su.notif_pos or 0
     ui_selected_style[0] = window_settings.su.notif_selected_style or 0
     ui_design_style[0] = window_settings.su.notif_design_style or 0
-
-    if not window_settings.su.notif_colors then
-        window_settings.su.notif_colors = deepcopy(default_colors)
-    end
+    if not window_settings.su.notif_colors then window_settings.su.notif_colors = deepcopy(default_colors) end
 end
 
 function saveWindowSettings()
-    window_settings.su.check_mask = check_mask[0]
-    window_settings.su.mask_confirm_key = mask_confirm_key
-    window_settings.su.mask_color = ui_mask_color[0]
-    window_settings.su.current_theme = current_theme[0]
-    window_settings.su.auto_update_enabled = auto_update_enabled[0]
-    
-    window_settings.su.notif_pos = ui_notif_pos[0]
-    window_settings.su.notif_selected_style = ui_selected_style[0]
-    window_settings.su.notif_design_style = ui_design_style[0]
-    
+    window_settings.su.check_mask = check_mask[0]; window_settings.su.mask_confirm_key = mask_confirm_key
+    window_settings.su.mask_color = ui_mask_color[0]; window_settings.su.current_theme = current_theme[0]
+    window_settings.su.auto_update_enabled = auto_update_enabled[0]; window_settings.su.notif_pos = ui_notif_pos[0]
+    window_settings.su.notif_selected_style = ui_selected_style[0]; window_settings.su.notif_design_style = ui_design_style[0]
     json(window_settings_file):write(window_settings)
 end
 
 function downloadConfigFromServer(url, target_file)
-    config_loading = true
-    local temp_file = target_file .. ".tmp"
-    
+    config_loading = true; local temp_file = target_file .. ".tmp"
     if doesFileExist(temp_file) then os.remove(temp_file) end
     downloadUrlToFile(url, temp_file)
-    
     local start_time = os.clock()
-    local max_wait = 5
-    
-    while os.clock() - start_time < max_wait do
+    while os.clock() - start_time < 5 do
         wait(100)
         if doesFileExist(temp_file) then
             local file = io.open(temp_file, "r")
             if file then
-                local content = file:read("*a")
-                file:close()
-                
+                local content = file:read("*a"); file:close()
                 if content and #content > 0 then
                     local config_data = decodeJson(content)
                     if config_data then
-                        if config_data.list then
-                            local config_to_save = { list = config_data.list }
-                            json(target_file):write(config_to_save)
-                            list = config_data.list
-                            config_loading = false
-                            os.remove(temp_file)
-                            return true
-                        else
-                            if type(config_data) == "table" then
-                                list = config_data
-                                local config_to_save = { list = config_data }
-                                json(target_file):write(config_to_save)
-                                config_loading = false
-                                os.remove(temp_file)
-                                return true
-                            end
-                        end
+                        list = config_data.list or config_data
+                        json(target_file):write({list = list})
+                        config_loading = false; os.remove(temp_file); return true
                     end
                 end
             end
             break
         end
     end
-    
-    config_loading = false
-    if doesFileExist(temp_file) then os.remove(temp_file) end
-    return false
+    config_loading = false; if doesFileExist(temp_file) then os.remove(temp_file) end; return false
 end
 
 function loadConfig()
     current_server = sampGetCurrentServerAddress()
     if not current_server or current_server == "" then return false end
-    
-    if not server_configs[current_server] then
-        sampAddChatMessage('{' .. getThemeMessageColor() .. '}[SmartWanted]: {ffffff}Данный сервер не поддерживается.', -1)
-        return false
-    end
-    
+    if not server_configs[current_server] then return false end
     config_file = getServerConfigFilename(current_server)
     local config_url = server_configs[current_server].url
-    
     local local_config = nil
     if doesFileExist(config_file) then
         local config = json(config_file):read()
-        if config and config.list then
-            list = config.list
-            local_config = config
-        end
+        if config and config.list then list = config.list; local_config = config end
     end
-    
-    if local_config == nil and config_url then
-        return downloadConfigFromServer(config_url, config_file)
-    end
-    
-    if local_config ~= nil and config_url then
-        local temp_file = config_file .. ".check"
-        if doesFileExist(temp_file) then os.remove(temp_file) end
-        downloadUrlToFile(config_url, temp_file)
-        wait(500)
-        
-        if doesFileExist(temp_file) then
-            local temp_config_file = io.open(temp_file, "r")
-            if temp_config_file then
-                local remote_content = temp_config_file:read("*a")
-                temp_config_file:close()
-                if remote_content and #remote_content > 0 then
-                    local remote_data = decodeJson(remote_content)
-                    if remote_data then
-                        local local_trimmed = ""
-                        local local_file = io.open(config_file, "r")
-                        if local_file then
-                            local local_content = local_file:read("*a")
-                            local_file:close()
-                            local_trimmed = local_content:gsub("%s+", "")
-                        end
-                        local remote_trimmed = remote_content:gsub("%s+", "")
-                        
-                        if local_trimmed ~= remote_trimmed then
-                            local config_to_save = { list = remote_data.list or remote_data }
-                            json(config_file):write(config_to_save)
-                            list = remote_data.list or remote_data
-                        end
-                    end
-                end
-            end
-            os.remove(temp_file)
-        end
-    end
-    
+    if local_config == nil and config_url then return downloadConfigFromServer(config_url, config_file) end
     return local_config ~= nil or list ~= nil
 end
 
@@ -889,16 +419,11 @@ function getSortedKeys(t, numeric)
     for k in pairs(t) do table.insert(keys, k) end
     if numeric then
         table.sort(keys, function(a, b)
-            local function parseVersion(str)
-                local parts = {}
-                for part in string.gmatch(str, "[^.]+") do table.insert(parts, tonumber(part) or 0) end
-                return parts
-            end
-            local parts_a = parseVersion(a)
-            local parts_b = parseVersion(b)
+            local parts_a, parts_b = {}, {}
+            for part in string.gmatch(a, "[^.]+") do table.insert(parts_a, tonumber(part) or 0) end
+            for part in string.gmatch(b, "[^.]+") do table.insert(parts_b, tonumber(part) or 0) end
             for i = 1, math.max(#parts_a, #parts_b) do
-                local num_a = parts_a[i] or 0
-                local num_b = parts_b[i] or 0
+                local num_a, num_b = parts_a[i] or 0, parts_b[i] or 0
                 if num_a ~= num_b then return num_a < num_b end
             end
             return false
@@ -909,69 +434,35 @@ end
 
 function addArticle(section_key, article_key, article_data)
     local article_number = tostring(article_key)
-    local article_wanted = article_data.wanted
-    local article_text = article_data.text
-    
-    for _, article in ipairs(selected_articles) do
-        if article.article_number == article_number then return end
-    end
-    
-    table.insert(selected_articles, {
-        section_key = 0,
-        article_number = article_number,
-        wanted = article_wanted,
-        text = article_text
-    })
-    
-    total_wanted_real = total_wanted_real + article_wanted
+    for _, article in ipairs(selected_articles) do if article.article_number == article_number then return end end
+    table.insert(selected_articles, {section_key = 0, article_number = article_number, wanted = article_data.wanted, text = article_data.text})
+    total_wanted_real = total_wanted_real + article_data.wanted
     total_wanted_display = math.min(total_wanted_real, 6)
 end
 
 function removeArticle(index)
     if selected_articles[index] then
-        local removed_wanted = selected_articles[index].wanted
-        total_wanted_real = total_wanted_real - removed_wanted
+        total_wanted_real = total_wanted_real - selected_articles[index].wanted
         total_wanted_display = math.min(total_wanted_real, 6)
         table.remove(selected_articles, index)
     end
 end
 
-function clearSelectedArticles()
-    selected_articles = {}
-    total_wanted_real = 0
-    total_wanted_display = 0
-end
+function clearSelectedArticles() selected_articles = {}; total_wanted_real = 0; total_wanted_display = 0 end
 
 function updateFilteredArticles()
     filtered_articles = {}
     local query = ffi.string(search_query):gsub("%z", "")
-    if query == "" or query:gsub("%s+", "") == "" then
-        show_search_results[0] = false
-        return
-    end
+    if query == "" or query:gsub("%s+", "") == "" then show_search_results[0] = false; return end
     local query_lower = query:lower()
-    local section_keys = getSortedKeys(list, true)
-    
-    for _, section_key in ipairs(section_keys) do
+    for _, section_key in ipairs(getSortedKeys(list, true)) do
         local section_data = list[section_key]
         if section_data and section_data.list then
-            local article_keys = getSortedKeys(section_data.list, true)
-            for _, article_key in ipairs(article_keys) do
+            for _, article_key in ipairs(getSortedKeys(section_data.list, true)) do
                 local article_data = section_data.list[article_key]
                 local full_number = tostring(section_key).."."..tostring(article_key)
-                local article_text = tostring(article_data.text)
-                
-                if full_number:lower():find(query_lower, 1, true) or 
-                   tostring(article_key):lower():find(query_lower, 1, true) or
-                   article_text:lower():find(query_lower, 1, true) then
-                    table.insert(filtered_articles, {
-                        section_key = section_key,
-                        article_key = article_key,
-                        wanted = article_data.wanted,
-                        full_number = full_number,
-                        article_text = article_text,
-                        section_name = section_data.name
-                    })
+                if full_number:lower():find(query_lower, 1, true) or tostring(article_key):lower():find(query_lower, 1, true) or tostring(article_data.text):lower():find(query_lower, 1, true) then
+                    table.insert(filtered_articles, {section_key = section_key, article_key = article_key, wanted = article_data.wanted, full_number = full_number, article_text = article_data.text, section_name = section_data.name})
                 end
             end
         end
@@ -985,62 +476,32 @@ local function MultilineSelectable(label, id)
     local cursor_pos = imgui.GetCursorPos()
     local clicked = imgui.Selectable(id, false, 0, imgui.ImVec2(width, text_size.y))
     local end_pos = imgui.GetCursorPos()
-    imgui.SetCursorPos(cursor_pos)
-    imgui.TextWrapped(label)
-    imgui.SetCursorPos(end_pos)
+    imgui.SetCursorPos(cursor_pos); imgui.TextWrapped(label); imgui.SetCursorPos(end_pos)
     return clicked
-end
-
-function saveWindowPositionAndSize(window_name)
-    if imgui.IsWindowAppearing() then return end
-    local current_pos = imgui.GetWindowPos()
-    if window_settings[window_name] then
-        window_settings[window_name].x = current_pos.x
-        window_settings[window_name].y = current_pos.y
-        saveWindowSettings()
-    end
 end
 
 -- =======================================================
 -- [ РЕНДЕР ИНТЕРФЕЙСА (IMGUI) ]
 -- =======================================================
-imgui.OnInitialize(function() 
-    reinitThemeNames()
-    applyTheme(current_theme[0]) 
-end)
-
-imgui.OnFrame(function() return true end, function()
-    if not isSampAvailable() or not sampIsLocalPlayerSpawned() then return end
-    RenderCustomNotifications()
-end).HideCursor = true
+imgui.OnInitialize(function() reinitThemeNames(); applyTheme(current_theme[0]) end)
+imgui.OnFrame(function() return true end, function() if not isSampAvailable() or not sampIsLocalPlayerSpawned() then return end RenderCustomNotifications() end).HideCursor = true
 
 imgui.OnFrame(function() return suWindow[0] end, function()
     if suWindow[0] then
-        local screenWidth, screenHeight = getScreenResolution()
-        local centerX = (screenWidth - 600) / 2
-        local centerY = (screenHeight - 600) / 2
-        imgui.SetNextWindowPos(imgui.ImVec2(centerX, centerY), imgui.Cond.Always)
+        local sw, sh = getScreenResolution()
+        imgui.SetNextWindowPos(imgui.ImVec2((sw - 600) / 2, (sh - 600) / 2), imgui.Cond.Always)
         imgui.SetNextWindowSize(imgui.ImVec2(600, 600), imgui.Cond.Always)
     end
     
     if imgui.Begin(u8'Выдача розыска', suWindow, imgui.WindowFlags.NoCollapse) then
-
-        imgui.Text(u8'Игрок: ' .. ffi.string(give_player_name))
-        imgui.Separator()
-        imgui.Spacing()
-        
+        imgui.Text(u8'Игрок: ' .. ffi.string(give_player_name)); imgui.Separator(); imgui.Spacing()
         if imgui.BeginChild('main_content', imgui.ImVec2(0, -70), false) then
-            
             if imgui.BeginTabBar(u8'##MainTabs') then
             
-            -- [ ВКЛАДКА 1: ВЫБОР СТАТЕЙ ]
             if imgui.BeginTabItem(u8'Выбор статей') then
-                current_tab = 1
-                imgui.Text(u8'Поиск по названию:')
-                imgui.PushItemWidth(-70)
+                current_tab = 1; imgui.Text(u8'Поиск по названию:'); imgui.PushItemWidth(-70)
                 if imgui.InputText('##search_articles', search_query, 256) then updateFilteredArticles() end
-                imgui.PopItemWidth()
-                imgui.SameLine()
+                imgui.PopItemWidth(); imgui.SameLine()
                 if imgui.Button(u8'Сброс') then ffi.copy(search_query, ""); show_search_results[0] = false; filtered_articles = {} end
                 imgui.Spacing()
                 
@@ -1070,9 +531,7 @@ imgui.OnFrame(function() return suWindow[0] end, function()
                     end
                     imgui.EndChild()
                 end
-                
                 imgui.Spacing(); imgui.Separator(); imgui.Spacing()
-                
                 if #selected_articles > 0 then
                     imgui.Text(u8'Выбранные статьи: ' .. #selected_articles)
                     if imgui.BeginChild('selected_articles_list', imgui.ImVec2(0, 150), true) then
@@ -1086,158 +545,78 @@ imgui.OnFrame(function() return suWindow[0] end, function()
                         end
                         imgui.EndChild()
                     end
-                    imgui.Spacing()
-                    imgui.TextColored(imgui.ImVec4(0.5, 1, 0.5, 1), u8'Розыск: ' .. total_wanted_display)
-                else
-                    imgui.TextDisabled(u8'Статьи не выбраны')
-                end
+                    imgui.Spacing(); imgui.TextColored(imgui.ImVec4(0.5, 1, 0.5, 1), u8'Розыск: ' .. total_wanted_display)
+                else imgui.TextDisabled(u8'Статьи не выбраны') end
                 imgui.EndTabItem()
             end
             
-            -- [ ВКЛАДКА 2: СВОЯ ПРИЧИНА ]
             if imgui.BeginTabItem(u8'Своя причина') then
-                current_tab = 2
-                imgui.Spacing()
-                imgui.Text(u8'Причина розыска:')
+                current_tab = 2; imgui.Spacing(); imgui.Text(u8'Причина розыска:')
                 imgui.InputTextMultiline('##give.custom.reason', give_custom_reason, 128, imgui.ImVec2(-1, 60))
-                imgui.Spacing()
-                imgui.Text(u8'Уровень розыска (1-6):')
-                imgui.PushItemWidth(-1)
+                imgui.Spacing(); imgui.Text(u8'Уровень розыска (1-6):'); imgui.PushItemWidth(-1)
                 if imgui.InputInt('##give.custom.wanted', give_custom_wanted) then
                     if give_custom_wanted[0] < 1 then give_custom_wanted[0] = 1 end
                     if give_custom_wanted[0] > 6 then give_custom_wanted[0] = 6 end
                 end
-                imgui.PopItemWidth()
-                imgui.EndTabItem()
+                imgui.PopItemWidth(); imgui.EndTabItem()
             end
             
-            -- [ ВКЛАДКА 3: НАСТРОЙКИ СКРИПТА ]
             if imgui.BeginTabItem(u8'Настройки') then
-                current_tab = 3
-                imgui.Spacing()
-                imgui.Text(u8'Тема оформления:')
+                current_tab = 3; imgui.Spacing(); imgui.Text(u8'Тема оформления:')
                 reinitThemeNames()
                 if imgui.Combo(u8'##theme_selector', current_theme, ImThemeNames, 24) then applyTheme(current_theme[0]); saveWindowSettings() end
                 imgui.Spacing(); imgui.Separator(); imgui.Spacing()
-                
                 if imgui.Checkbox(u8'Проверять наличие маски на игроке', check_mask) then window_settings.su.check_mask = check_mask[0]; saveWindowSettings() end
                 if check_mask[0] then
-                    imgui.Spacing()
-                    imgui.Text(u8'Клавиша подтверждения: ' .. mask_confirm_key_name)
-                    if waiting_for_key then
-                        imgui.Button(u8'Нажмите клавишу (ESC - отмена)', imgui.ImVec2(-1, 0))
-                    else
-                        if imgui.Button(u8'Клавиша подтверждения маски', imgui.ImVec2(-1, 0)) then waiting_for_key = true end
-                    end
+                    imgui.Spacing(); imgui.Text(u8'Клавиша подтверждения: ' .. mask_confirm_key_name)
+                    if waiting_for_key then imgui.Button(u8'Нажмите клавишу (ESC - отмена)', imgui.ImVec2(-1, 0))
+                    else if imgui.Button(u8'Клавиша подтверждения маски', imgui.ImVec2(-1, 0)) then waiting_for_key = true end end
                 end
                 imgui.Spacing(); imgui.Separator(); imgui.Spacing()
-                
-                -- Чекбокс для автообновления
-                if imgui.Checkbox(u8'Включить автообновление скрипта', auto_update_enabled) then 
-                    window_settings.su.auto_update_enabled = auto_update_enabled[0]
-                    saveWindowSettings() 
-                end
-                imgui.SameLine()
-                imgui.TextDisabled(u8'v' .. script_version)
-                if auto_update_enabled[0] then
-                    imgui.Text(u8'Статус: Включено')
-                else
-                    imgui.Text(u8'Статус: Отключено')
-                end
+                if imgui.Checkbox(u8'Включить автообновление скрипта', auto_update_enabled) then window_settings.su.auto_update_enabled = auto_update_enabled[0]; saveWindowSettings() end
+                imgui.SameLine(); imgui.TextDisabled(u8'v' .. thisScript().version)
+                imgui.Text(u8'Статус: ' .. (auto_update_enabled[0] and u8'Включено' or u8'Отключено'))
                 imgui.EndTabItem()
             end
 
-            -- [ ВКЛАДКА 4: НАСТРОЙКИ УВЕДОМЛЕНИЙ ]
             if imgui.BeginTabItem(u8'Настройки уведомлений') then
-                imgui.Spacing()
-                imgui.TextColored(imgui.ImVec4(1, 1, 1, 1), u8"Внешний вид уведомлений")
-                imgui.Spacing()
-                imgui.Text(u8"Дизайн уведомлений:")
+                imgui.Spacing(); imgui.TextColored(imgui.ImVec4(1, 1, 1, 1), u8"Внешний вид уведомлений"); imgui.Spacing(); imgui.Text(u8"Дизайн уведомлений:")
                 local design_names = {u8"Классический (Заливка)", u8"Минимализм (Рамка)", u8"Полупрозрачный", u8"Яркий"}
                 if imgui.Combo(u8"Выберите стиль##design_style", ui_design_style, imgui.new['const char*'][4](design_names[1], design_names[2], design_names[3], design_names[4]), 4) then
-                    window_settings.su.notif_design_style = ui_design_style[0]
-                    saveWindowSettings()
-                    local style_name = ui_style_names[ui_selected_style[0] + 1]
-                    Notify(u8"Дизайн изменен", u8"Вы выбрали стиль: " .. design_names[ui_design_style[0] + 1], style_name, 3.0)
+                    window_settings.su.notif_design_style = ui_design_style[0]; saveWindowSettings()
+                    Notify(u8"Дизайн изменен", u8"Вы выбрали стиль: " .. design_names[ui_design_style[0] + 1], ui_style_names[ui_selected_style[0] + 1], 3.0)
                 end
-
                 imgui.Text(u8"Расположение на экране:")
                 local pos_names = {u8"Снизу справа", u8"Снизу слева", u8"Сверху справа", u8"Сверху слева", u8"По центру"}
-                if imgui.Combo("##notifpos", ui_notif_pos, imgui.new['const char*'][5](pos_names[1],pos_names[2],pos_names[3],pos_names[4],pos_names[5]), 5) then
-                    window_settings.su.notif_pos = ui_notif_pos[0]; saveWindowSettings()
-                end
-
-                imgui.Spacing(); imgui.Separator(); imgui.Spacing()
-                imgui.TextColored(imgui.ImVec4(1, 1, 1, 1), u8"Размер и геометрия")
-                imgui.Spacing()
-
+                if imgui.Combo("##notifpos", ui_notif_pos, imgui.new['const char*'][5](pos_names[1],pos_names[2],pos_names[3],pos_names[4],pos_names[5]), 5) then window_settings.su.notif_pos = ui_notif_pos[0]; saveWindowSettings() end
+                imgui.Spacing(); imgui.Separator(); imgui.Spacing(); imgui.TextColored(imgui.ImVec4(1, 1, 1, 1), u8"Размер и геометрия"); imgui.Spacing()
                 local w_val = new.int(window_settings.su.notif_width)
-                if imgui.SliderInt(u8"Размер окна уведомления", w_val, 200, 600) then window_settings.su.notif_width = w_val[0]; saveWindowSettings() end
+                if imgui.SliderInt(u8"Размер окна", w_val, 200, 600) then window_settings.su.notif_width = w_val[0]; saveWindowSettings() end
                 local r_val = new.float(window_settings.su.notif_rounding)
                 if imgui.SliderFloat(u8"Скругление границ", r_val, 0.0, 20.0) then window_settings.su.notif_rounding = r_val[0]; saveWindowSettings() end
-
-                imgui.Spacing(); imgui.Separator(); imgui.Spacing()
-                imgui.TextColored(imgui.ImVec4(1, 1, 1, 1), u8"Анимация")
-                imgui.Spacing()
-
+                imgui.Spacing(); imgui.Separator(); imgui.Spacing(); imgui.TextColored(imgui.ImVec4(1, 1, 1, 1), u8"Анимация"); imgui.Spacing()
                 local f_in_val = new.float(window_settings.su.notif_fade_in)
-                if imgui.SliderFloat(u8"Время входа (сек)", f_in_val, 0.1, 2.0) then window_settings.su.notif_fade_in = f_in_val[0]; saveWindowSettings() end
+                if imgui.SliderFloat(u8"Время входа", f_in_val, 0.1, 2.0) then window_settings.su.notif_fade_in = f_in_val[0]; saveWindowSettings() end
                 local f_out_val = new.float(window_settings.su.notif_fade_out)
-                if imgui.SliderFloat(u8"Время выхода (сек)", f_out_val, 0.1, 2.0) then window_settings.su.notif_fade_out = f_out_val[0]; saveWindowSettings() end
-
-                imgui.Spacing(); imgui.Separator(); imgui.Spacing()
-                imgui.TextColored(imgui.ImVec4(1, 1, 1, 1), u8"Цветовые схемы")
-                imgui.Spacing()
-
-                imgui.Text(u8"Цветовые палитры:")
-                local s_names_c = imgui.new['const char*'][4](ui_style_labels[1], ui_style_labels[2], ui_style_labels[3], ui_style_labels[4])
-                if imgui.Combo(u8"Выберите тип уведомления", ui_selected_style, s_names_c, 4) then 
-                    window_settings.su.notif_selected_style = ui_selected_style[0]; saveWindowSettings() 
-                    Notify(u8"Превью", u8"Показ выбранного стиля уведомления.", ui_style_names[ui_selected_style[0] + 1], 3.0)
+                if imgui.SliderFloat(u8"Время выхода", f_out_val, 0.1, 2.0) then window_settings.su.notif_fade_out = f_out_val[0]; saveWindowSettings() end
+                imgui.Spacing(); imgui.Separator(); imgui.Spacing(); imgui.TextColored(imgui.ImVec4(1, 1, 1, 1), u8"Цветовые схемы"); imgui.Spacing()
+                if imgui.Combo(u8"Выберите тип уведомления", ui_selected_style, imgui.new['const char*'][4](ui_style_labels[1], ui_style_labels[2], ui_style_labels[3], ui_style_labels[4]), 4) then 
+                    window_settings.su.notif_selected_style = ui_selected_style[0]; saveWindowSettings()
+                    Notify(u8"Превью", u8"Показ выбранного стиля.", ui_style_names[ui_selected_style[0] + 1], 3.0)
                 end
-                
                 local c_style = ui_style_names[ui_selected_style[0] + 1]
                 local c_colors = window_settings.su.notif_colors[c_style]
-                
                 local function ColorEditArray(label, color_array)
                     local vec = new.float[4](color_array[1], color_array[2], color_array[3], color_array[4])
-                    if imgui.ColorEdit4(label, vec) then
-                        color_array[1] = vec[0]; color_array[2] = vec[1]; color_array[3] = vec[2]; color_array[4] = vec[3]
-                        saveWindowSettings()
-                    end
+                    if imgui.ColorEdit4(label, vec) then color_array[1], color_array[2], color_array[3], color_array[4] = vec[0], vec[1], vec[2], vec[3]; saveWindowSettings() end
                 end
-
-                if c_colors then
-                    ColorEditArray(u8"Фон (Background)##"..c_style, c_colors.bg)
-                    ColorEditArray(u8"Акцент (Accent)##"..c_style, c_colors.accent)
-                    ColorEditArray(u8"Заголовок (Title)##"..c_style, c_colors.title)
-                    ColorEditArray(u8"Текст (Text)##"..c_style, c_colors.text)
-                end
-                
-                if imgui.Button(u8"Вернуть стандартные цвета для: " .. ui_style_labels[ui_selected_style[0] + 1], imgui.ImVec2(-1, 0)) then
-                    window_settings.su.notif_colors[c_style] = deepcopy(default_colors[c_style])
-                    saveWindowSettings()
-                    Notify(u8"Сброс", u8"Цвета для этого стиля сброшены на стандартные.", c_style, 3.0)
-                end
-
-                imgui.Spacing(); imgui.Separator(); imgui.Spacing()
-                imgui.TextColored(imgui.ImVec4(1, 1, 1, 1), u8"Тест уведомлений")
-                imgui.Spacing()
-                
-                imgui.Text(u8"Режим отображения:")
-                if imgui.RadioButtonIntPtr(u8"Динамичное (пропадает автоматически)", ui_test_mode, 0) then ui_test_mode[0] = 0 end
-                imgui.SameLine()
-                if imgui.RadioButtonIntPtr(u8"Статичное (вечно на экране)", ui_test_mode, 1) then ui_test_mode[0] = 1 end
-
-                if imgui.Button(u8"Тест уведомления: " .. ui_style_labels[ui_selected_style[0] + 1], imgui.ImVec2(-1, 30)) then
-                    local dur = (ui_test_mode[0] == 1) and math.huge or 4.0
-                    local mode_text = (ui_test_mode[0] == 1) and u8"Статичное: закройте кликом по кнопке в интерфейсе." or u8"Динамичное: пропадет само."
-                    Notify(u8"Тестовое сообщение", mode_text, c_style, dur)
-                end
-                if ui_test_mode[0] == 1 then
-                    if imgui.Button(u8"Убрать все статичные уведомления", imgui.ImVec2(-1, 0)) then ClearAllNotifs() end
-                end
-
+                if c_colors then ColorEditArray(u8"Фон##"..c_style, c_colors.bg); ColorEditArray(u8"Акцент##"..c_style, c_colors.accent); ColorEditArray(u8"Заголовок##"..c_style, c_colors.title); ColorEditArray(u8"Текст##"..c_style, c_colors.text) end
+                if imgui.Button(u8"Сбросить цвета стиля", imgui.ImVec2(-1, 0)) then window_settings.su.notif_colors[c_style] = deepcopy(default_colors[c_style]); saveWindowSettings(); Notify(u8"Сброс", u8"Цвета сброшены.", c_style, 3.0) end
+                imgui.Spacing(); imgui.Separator(); imgui.Spacing(); imgui.TextColored(imgui.ImVec4(1, 1, 1, 1), u8"Тест уведомлений"); imgui.Spacing()
+                if imgui.RadioButtonIntPtr(u8"Динамичное", ui_test_mode, 0) then ui_test_mode[0] = 0 end; imgui.SameLine()
+                if imgui.RadioButtonIntPtr(u8"Статичное", ui_test_mode, 1) then ui_test_mode[0] = 1 end
+                if imgui.Button(u8"Проверить уведомление", imgui.ImVec2(-1, 30)) then Notify(u8"Тест", ui_test_mode[0] == 1 and u8"Статичное" or u8"Динамичное", c_style, ui_test_mode[0] == 1 and math.huge or 4.0) end
+                if ui_test_mode[0] == 1 and imgui.Button(u8"Убрать все статичные", imgui.ImVec2(-1, 0)) then ClearAllNotifs() end
                 imgui.EndTabItem()
             end
             
@@ -1246,65 +625,39 @@ imgui.OnFrame(function() return suWindow[0] end, function()
         end
         imgui.EndChild()
         
-        imgui.Spacing()
-        imgui.Separator()
-        imgui.Spacing()
-        
+        imgui.Spacing(); imgui.Separator(); imgui.Spacing()
         local btn_width = (imgui.GetContentRegionAvail().x - 5) / 2
         if imgui.Button(u8'Выдать розыск', imgui.ImVec2(btn_width, 35)) then
             if current_tab == 1 and #selected_articles > 0 then
                 local astr = ""
                 for i, a in ipairs(selected_articles) do astr = astr .. (i==1 and "" or "+") .. a.article_number:gsub("_.*", "") end
                 local cmd = '/n '..give_player_id[0]..' '..total_wanted_display..' '..astr
-                
                 if check_mask[0] and checkPlayerMask(give_player_id[0]) then
                     pending_command = cmd; mask_confirm_time = os.time(); suWindow[0] = false; show_mask_confirm[0] = true
-                    mask_notify_id = Notify(u8"Маска обнаружена", u8("Игрок в маске! Нажмите \""..mask_confirm_key_name.."\" для выдачи."), "warn", 30.0)
-                else
-                    sampSendChat(cmd)
-                    Notify(u8"Успешно", u8"Розыск выдан гражданину.", "success", 3.0)
-                    clearSelectedArticles(); suWindow[0] = false
-                end
+                    mask_notify_id = Notify(u8"Маска", u8("Игрок в маске! Нажмите \""..mask_confirm_key_name.."\" для выдачи."), "warn", 30.0)
+                else sampSendChat(cmd); Notify(u8"Успешно", u8"Розыск выдан.", "success", 3.0); clearSelectedArticles(); suWindow[0] = false end
             elseif current_tab == 2 then
                 local reason_raw = ffi.string(give_custom_reason)
-                if reason_raw == "" then return end
-                -- ПЕРЕКОДИРОВКА UTF-8 -> CP1251
-                local reason_cp1251 = toCp1251(reason_raw)
-                local cmd = '/n '..give_player_id[0]..' '..give_custom_wanted[0]..' '..reason_cp1251
-                if check_mask[0] and checkPlayerMask(give_player_id[0]) then
-                    pending_command = cmd; mask_confirm_time = os.time(); suWindow[0] = false; show_mask_confirm[0] = true
-                    mask_notify_id = Notify(u8"Маска обнаружена", u8("Игрок в маске! Нажмите \""..mask_confirm_key_name.."\" для выдачи."), "warn", 30.0)
-                else
-                    sampSendChat(cmd)
-                    Notify(u8"Успешно", u8"Розыск выдан гражданину.", "success", 3.0)
-                    ffi.fill(give_custom_reason, 128, 0); suWindow[0] = false
+                if reason_raw ~= "" then
+                    local cmd = '/n '..give_player_id[0]..' '..give_custom_wanted[0]..' '..toCp1251(reason_raw)
+                    if check_mask[0] and checkPlayerMask(give_player_id[0]) then
+                        pending_command = cmd; mask_confirm_time = os.time(); suWindow[0] = false; show_mask_confirm[0] = true
+                        mask_notify_id = Notify(u8"Маска", u8("Игрок в маске! Нажмите \""..mask_confirm_key_name.."\" для выдачи."), "warn", 30.0)
+                    else sampSendChat(cmd); Notify(u8"Успешно", u8"Розыск выдан.", "success", 3.0); ffi.fill(give_custom_reason, 128, 0); suWindow[0] = false end
                 end
             end
         end
         
-        -- Tooltip для кнопки "Выдать розыск"
-        if current_tab == 1 then
-            if #selected_articles > 0 then
-                local articles_str = ""
-                for i, article in ipairs(selected_articles) do
-                    local clean_num = article.article_number:gsub("_.*", "")
-                    articles_str = articles_str .. (i == 1 and "" or "+") .. clean_num
-                end
-                imgui.Tooltip(u8'Будет отправлено:\n/su '..give_player_id[0]..' '..total_wanted_display..' '..articles_str)
-            end
-        elseif current_tab == 2 then
-            local res_raw = ffi.string(give_custom_reason)
-            if res_raw ~= "" then
-                local res_cp1251 = encoding.CP1251(res_raw)
-                imgui.Tooltip(u8'Будет отправлено:\n/su '..give_player_id[0]..' '..give_custom_wanted[0]..' '..res_cp1251)
-            end
+        if current_tab == 1 and #selected_articles > 0 then
+            local astr = ""
+            for i, a in ipairs(selected_articles) do astr = astr .. (i == 1 and "" or "+") .. a.article_number:gsub("_.*", "") end
+            imgui.Tooltip(u8'Будет отправлено:\n/su '..give_player_id[0]..' '..total_wanted_display..' '..astr)
+        elseif current_tab == 2 and ffi.string(give_custom_reason) ~= "" then
+            imgui.Tooltip(u8'Будет отправлено:\n/su '..give_player_id[0]..' '..give_custom_wanted[0]..' '..encoding.CP1251(ffi.string(give_custom_reason)))
         end
         
         imgui.SameLine()
-        if imgui.Button(u8'Отмена', imgui.ImVec2(btn_width, 35)) then 
-            suWindow[0] = false; clearSelectedArticles(); ffi.copy(search_query, ""); show_search_results[0] = false
-        end
-
+        if imgui.Button(u8'Отмена', imgui.ImVec2(btn_width, 35)) then suWindow[0] = false; clearSelectedArticles(); ffi.copy(search_query, ""); show_search_results[0] = false end
         imgui.End()
     end
 end)
@@ -1313,70 +666,27 @@ function cmdSu(arg)
     if not arg or arg == "" then Notify(u8"Ошибка", u8"Введите ID игрока: /su [id]", "error", 3) return end
     local pid = tonumber(arg)
     if not pid then Notify(u8"Ошибка", u8"Неверный ID игрока.", "error", 3) return end
-    
     ffi.copy(search_query, ""); show_search_results[0] = false; filtered_articles = {}; clearSelectedArticles()
-    if sampIsPlayerConnected(pid) then
-        give_player_id[0] = pid
-        ffi.copy(give_player_name, sampGetPlayerNickname(pid) .. ' [' .. arg .. ']')
-        suWindow[0] = true
-    else
-        Notify(u8"Ошибка", u8"Игрок не в сети!", "error", 3)
-    end
+    if sampIsPlayerConnected(pid) then give_player_id[0] = pid; ffi.copy(give_player_name, sampGetPlayerNickname(pid) .. ' [' .. arg .. ']'); suWindow[0] = true
+    else Notify(u8"Ошибка", u8"Игрок не в сети!", "error", 3) end
 end
 
 function main()
     if not doesDirectoryExist(config_dir) then createDirectory(config_dir) end
     loadWindowSettings()
-    
     sampRegisterChatCommand('su', cmdSu)
-    sampRegisterChatCommand('updatescript', function()
-        if not auto_update_instance then
-            Notify(u8"Ошибка", u8"Система обновления не инициализирована", "error", 3)
-            return
-        end
-        Notify(u8"Обновление", u8"Проверка обновлений...", "info", 3)
-        auto_update_instance:check_async(function(has_update)
-            if has_update then
-                Notify(u8"Обновление", u8"Найдена новая версия! Установка...", "info", 3)
-                wait(1000)
-                if auto_update_instance:install_update() then
-                    Notify(u8"Успешно", u8"Обновление установлено! Перезагрузка...", "success", 4)
-                    wait(2000)
-                    thisScript():reload()
-                else
-                    Notify(u8"Ошибка", u8"Не удалось установить обновление", "error", 4)
-                end
-            else
-                Notify(u8"Инфо", u8"У вас уже последняя версия", "info", 3)
-            end
-        end)
-    end)
     
     lua_thread.create(function()
         while not isSampAvailable() do wait(100) end
         wait(2000)
+        
+        -- Вызов автообновления от QRLK
+        if autoupdate_loaded and enable_autoupdate and auto_update_enabled[0] and Update then
+            pcall(Update.check, Update.json_url, Update.prefix, Update.url)
+        end
+        
         if not loadConfig() then thisScript():unload() end
         sampAddChatMessage('{' .. getThemeMessageColor() .. '}[SmartWanted]: {ffffff}Скрипт загружен. Автор Maga Qwelz. Введите /su [id].', -1)
-        
-        -- Инициализация системы автообновления
-        if auto_update_enabled[0] then
-            auto_update_instance = AutoUpdateSystem:new({
-                version_file_url = "https://raw.githubusercontent.com/MagaQwelz/SmartWanted-Updates/refs/heads/main/version.txt",
-                script_file_url = "https://raw.githubusercontent.com/MagaQwelz/SmartWanted-Updates/refs/heads/main/SmartWantedV2.lua",
-                script_name = "SmartWantedV2",
-                notify_callback = function(msg, type) Notify(u8"Обновление", msg, type, 3) end
-            })
-            
-            wait(3000)
-            auto_update_instance:check_async(function(has_update)
-                if has_update then
-                    Notify(u8"Обновление", u8"Доступна новая версия! /updatescript", "info", 5)
-                    update_check_done = true
-                else
-                    update_check_done = true
-                end
-            end)
-        end
     end)
     
     while true do
@@ -1384,30 +694,20 @@ function main()
         if waiting_for_key then
             for vkey = 1, 255 do
                 if wasKeyPressed(vkey) then
-                    if vkey ~= 27 then 
-                        mask_confirm_key = vkey; mask_confirm_key_name = getKeyName(vkey); saveWindowSettings() 
-                    end
+                    if vkey ~= 27 then mask_confirm_key = vkey; mask_confirm_key_name = getKeyName(vkey); saveWindowSettings() end
                     waiting_for_key = false
                 end
             end
         elseif show_mask_confirm[0] then
             if os.time() - mask_confirm_time >= MASK_CONFIRM_TIMEOUT then
-                RemoveNotify(mask_notify_id)
-                Notify(u8"Таймаут", u8"Время ожидания (30 сек) истекло. Отмена.", "error", 4.0)
-                show_mask_confirm[0] = false; pending_command = ""
+                RemoveNotify(mask_notify_id); Notify(u8"Таймаут", u8"Время ожидания истекло.", "error", 4.0); show_mask_confirm[0] = false; pending_command = ""
             else
                 for vkey = 1, 255 do
                     if wasKeyPressed(vkey) then
-                        if vkey == 27 then
-                            RemoveNotify(mask_notify_id)
-                            Notify(u8"Отмена", u8"Выдача розыска прервана офицером.", "info", 3.0)
-                            show_mask_confirm[0] = false; pending_command = ""
+                        if vkey == 27 then RemoveNotify(mask_notify_id); Notify(u8"Отмена", u8"Действие прервано.", "info", 3.0); show_mask_confirm[0] = false; pending_command = ""
                         elseif vkey == mask_confirm_key then
-                            RemoveNotify(mask_notify_id)
-                            sampSendChat(pending_command)
-                            Notify(u8"Успешно", u8"Розыск выдан гражданину.", "success", 3.0)
-                            show_mask_confirm[0] = false; pending_command = ""; suWindow[0] = false
-                            ffi.fill(give_custom_reason, 128, 0)
+                            RemoveNotify(mask_notify_id); sampSendChat(pending_command); Notify(u8"Успешно", u8"Розыск выдан.", "success", 3.0)
+                            show_mask_confirm[0] = false; pending_command = ""; suWindow[0] = false; ffi.fill(give_custom_reason, 128, 0)
                             if current_tab == 1 then clearSelectedArticles() end
                         end
                     end
@@ -1418,7 +718,7 @@ function main()
 end
 
 -- =======================================================
--- [ ПОЛНЫЕ 24 ТЕМЫ ОФОРМЛЕНИЯ IMGUI ]
+-- [ ВСТАВЬТЕ СВОИ ТЕМЫ ОФОРМЛЕНИЯ IMGUI СЮДА ]
 -- =======================================================
 function getThemeMessageColor() return "ff8800" end
 function theme() applyTheme(current_theme[0]) end
