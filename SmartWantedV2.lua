@@ -1,6 +1,6 @@
 script_author "Maga Qwelz/Agro Morris/Otto Egorov"
 script_name "SmartWanted"
-script_version "2.0.5" -- Версия обязательно должна совпадать с "latest" в вашем JSON на GitHub
+script_version "2.0.6" -- Версия обязательно должна совпадать с "latest" в вашем JSON на GitHub
 
 local imgui = require "mimgui"
 local encoding = require 'encoding'
@@ -33,7 +33,7 @@ if enable_autoupdate then
         autoupdate_loaded, Update = pcall(Updater)
         if autoupdate_loaded then
             -- Ваша ссылка на JSON с версией
-            Update.json_url = "https://raw.githubusercontent.com/ottoegorov7-art/SmartWanted/refs/heads/main/version.json?" .. tostring(os.clock())
+            Update.json_url = "https://raw.githubusercontent.com/ottoegorov7-art/SmartWanted/refs/heads/main/version.json" .. tostring(os.clock())
             Update.prefix = "{ff8800}[SmartWanted]: {ffffff}"
             -- Ссылка на ваш репозиторий (выведется в лог при ошибке)
             Update.url = "https://github.com/ottoegorov7-art/SmartWanted/"
@@ -86,6 +86,7 @@ local MASK_CONFIRM_TIMEOUT = 30
 local mask_notify_id = 0 
 
 local current_theme = new.int(0)
+local auto_update_enabled = new.bool(true) -- ВОТ ПЕРЕМЕННАЯ, ИЗ-ЗА КОТОРОЙ БЫЛ КРАШ
 
 -- =======================================================
 -- [ СИСТЕМА НАСТРОЕК ]
